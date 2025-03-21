@@ -1,6 +1,8 @@
 use super::schema::CommonSecurityAdvisoryFramework;
-use crate::csaf::validation::{test_6_01_01_missing_definition_of_product_id, test_6_01_02_multiple_definition_of_product_id, Test, Validatable, ValidationPreset};
 use std::collections::HashMap;
+use crate::csaf::validation::{Test, Validatable, ValidationPreset};
+use crate::csaf::validations::test_6_1_01::test_6_1_01_missing_definition_of_product_id;
+use crate::csaf::validations::test_6_1_02::test_6_1_02_multiple_definition_of_product_id;
 
 impl Validatable<CommonSecurityAdvisoryFramework> for CommonSecurityAdvisoryFramework {
     fn presets(&self) -> HashMap<ValidationPreset, Vec<&str>> {
@@ -20,8 +22,8 @@ impl Validatable<CommonSecurityAdvisoryFramework> for CommonSecurityAdvisoryFram
     fn tests(&self) -> HashMap<&str, Test<CommonSecurityAdvisoryFramework>> {
         type CsafTest = Test<CommonSecurityAdvisoryFramework>;
         HashMap::from([
-            ("6.1.1", test_6_01_01_missing_definition_of_product_id as CsafTest),
-            ("6.1.2", test_6_01_02_multiple_definition_of_product_id as CsafTest),
+            ("6.1.1", test_6_1_01_missing_definition_of_product_id as CsafTest),
+            ("6.1.2", test_6_1_02_multiple_definition_of_product_id as CsafTest),
         ])
     }
 
@@ -30,28 +32,3 @@ impl Validatable<CommonSecurityAdvisoryFramework> for CommonSecurityAdvisoryFram
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::csaf::csaf2_0::loader::load_document;
-    use crate::csaf::validation::{test_6_01_01_missing_definition_of_product_id, test_6_01_02_multiple_definition_of_product_id};
-
-    #[test]
-    fn test_test_6_01_01() {
-        let doc = load_document("../csaf/csaf_2.0/test/validator/data/mandatory/oasis_csaf_tc-csaf_2_0-2021-6-1-01-01.json").unwrap();
-        assert_eq!(
-            test_6_01_01_missing_definition_of_product_id(&doc),
-            Err(String::from("Missing definitions: [\"CSAFPID-9080700\", \"CSAFPID-9080701\"]"))
-        )
-    }
-
-    #[test]
-    fn test_test_6_01_02() {
-        let doc = load_document("../csaf/csaf_2.0/test/validator/data/mandatory/oasis_csaf_tc-csaf_2_0-2021-6-1-02-01.json").unwrap();
-        assert_eq!(
-            test_6_01_02_multiple_definition_of_product_id(&doc),
-            Err(String::from(
-                "Duplicate definitions: [\"CSAFPID-9080700\"]"
-            ))
-        )
-    }
-}

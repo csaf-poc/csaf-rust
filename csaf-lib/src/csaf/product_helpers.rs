@@ -1,21 +1,24 @@
 use crate::csaf::getter_traits::{BranchTrait, CsafTrait, FullProductNameTrait, MetricTrait, ProductGroupTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, ThreatTrait, VulnerabilityTrait};
-use std::collections::HashSet;
 
-pub fn gather_product_references(doc: &impl CsafTrait) -> HashSet<String> {
-    let mut ids = HashSet::<String>::new();
+pub fn gather_product_references(doc: &impl CsafTrait) -> Vec<(String, String)> {
+    let mut ids = Vec::<(String, String)>::new();
 
-    if let Some(x) = doc.get_product_tree().as_ref() {
+    if let Some(pt) = doc.get_product_tree().as_ref() {
         // /product_tree/product_groups[]/product_ids[]
-        ids.extend(x.get_product_groups().iter().flat_map(|x| x.get_product_ids()).map(|x| x.to_owned()));
-
+        for (g_i, g) in pt.get_product_groups().iter().enumerate() {
+            for (i_i, i) in g.get_product_ids().iter().enumerate() {
+                ids.push(((*i).to_owned(), format!("/product_tree/product_groups/{}/product_ids/{}", g_i, i_i)))
+            }
+        }
         // /product_tree/relationships[]/product_reference
-        ids.extend(x.get_relationships().iter().map(|x| x.get_product_reference().to_owned()));
-
         // /product_tree/relationships[]/relates_to_product_reference
-        ids.extend(x.get_relationships().iter().map(|x| x.get_relates_to_product_reference().to_owned()));
+        for (r_i, r) in pt.get_relationships().iter().enumerate() {
+            ids.push((r.get_product_reference().to_owned(), format!("/product_tree/relationships/{}/product_reference", r_i)));
+            ids.push((r.get_relates_to_product_reference().to_owned(), format!("/product_tree/relationships/{}/relates_to_product_reference", r_i)));
+        }
     }
 
-    for vuln in doc.get_vulnerabilities().iter() {
+    for (v_i, v) in doc.get_vulnerabilities().iter().enumerate() {
         // /vulnerabilities[]/product_status/first_affected[]
         // /vulnerabilities[]/product_status/first_fixed[]
         // /vulnerabilities[]/product_status/fixed[]
@@ -24,48 +27,73 @@ pub fn gather_product_references(doc: &impl CsafTrait) -> HashSet<String> {
         // /vulnerabilities[]/product_status/last_affected[]
         // /vulnerabilities[]/product_status/recommended[]
         // /vulnerabilities[]/product_status/under_investigation[]
-        if let Some(status) = vuln.get_product_status().as_ref() {
-            if let Some(x) = status.get_first_affected().as_ref() {
-                ids.extend(x.iter().map(|x| (*x).clone()));
+        if let Some(status) = v.get_product_status().as_ref() {
+            if let Some(fa) = status.get_first_affected().as_ref() {
+                for (x_i, x) in fa.iter().enumerate() {
+                    ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/product_status/first_affected/{}", v_i, x_i)));
+                }
             }
-            if let Some(x) = status.get_first_fixed().as_ref() {
-                ids.extend(x.iter().map(|x| (*x).clone()));
+            if let Some(ff) = status.get_first_fixed().as_ref() {
+                for (x_i, x) in ff.iter().enumerate() {
+                    ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/product_status/first_fixed/{}", v_i, x_i)));
+                }
             }
-            if let Some(x) = status.get_fixed().as_ref() {
-                ids.extend(x.iter().map(|x| (*x).clone()));
+            if let Some(f) = status.get_fixed().as_ref() {
+                for (x_i, x) in f.iter().enumerate() {
+                    ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/product_status/fixed/{}", v_i, x_i)));
+                }
             }
-            if let Some(x) = status.get_known_affected().as_ref() {
-                ids.extend(x.iter().map(|x| (*x).clone()));
+            if let Some(ka) = status.get_known_affected().as_ref() {
+                for (x_i, x) in ka.iter().enumerate() {
+                    ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/product_status/known_affected/{}", v_i, x_i)));
+                }
             }
-            if let Some(x) = status.get_last_affected().as_ref() {
-                ids.extend(x.iter().map(|x| (*x).clone()));
+            if let Some(kna) = status.get_known_not_affected().as_ref() {
+                for (x_i, x) in kna.iter().enumerate() {
+                    ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/product_status/known_not_affected/{}", v_i, x_i)));
+                }
             }
-            if let Some(x) = status.get_recommended().as_ref() {
-                ids.extend(x.iter().map(|x| (*x).clone()));
+            if let Some(la) = status.get_last_affected().as_ref() {
+                for (x_i, x) in la.iter().enumerate() {
+                    ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/product_status/last_affected/{}", v_i, x_i)));
+                }
             }
-            if let Some(x) = status.get_under_investigation().as_ref() {
-                ids.extend(x.iter().map(|x| (*x).clone()));
+            if let Some(r) = status.get_recommended().as_ref() {
+                for (x_i, x) in r.iter().enumerate() {
+                    ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/product_status/recommended/{}", v_i, x_i)));
+                }
+            }
+            if let Some(ui) = status.get_under_investigation().as_ref() {
+                for (x_i, x) in ui.iter().enumerate() {
+                    ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/product_status/under_investigation/{}", v_i, x_i)));
+                }
             }
         }
 
         // /vulnerabilities[]/remediations[]/product_ids[]
-        for rem in vuln.get_remediations().iter() {
-            if let Some(x) = rem.get_product_ids().as_ref() {
-                ids.extend(x.iter().map(|x| (*x).clone()));
+        for (rem_i, rem) in v.get_remediations().iter().enumerate() {
+            if let Some(product_ids) = rem.get_product_ids().as_ref() {
+                for (x_i, x) in product_ids.iter().enumerate() {
+                    ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/remediations/{}/product_ids/{}", v_i, rem_i, x_i)));
+                }
             }
         }
 
         // /vulnerabilities[]/metrics[]/products[]
-        if let Some(metrics) = vuln.get_metrics().as_ref() {
-            metrics.iter().for_each(|metric| {
-                ids.extend(metric.get_products().iter().map(|x| (*x).clone()))
-            });
+        if let Some(metrics) = v.get_metrics().as_ref() {
+            for (metric_i, metric) in metrics.iter().enumerate() {
+                for (x_i, x) in metric.get_products().iter().enumerate() {
+                    ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/metrics/{}/products/{}", v_i, metric_i, x_i)));
+                }
+            }
         }
 
         // /vulnerabilities[]/threats[]/product_ids[]
-        for threat in vuln.get_threats().iter() {
-            if let Some(x) = threat.get_product_ids().as_ref() {
-                ids.extend(x.iter().map(|x| (*x).clone()));
+        for (threat_i, threat) in v.get_threats().iter().enumerate() {
+            if let Some(product_ids) = threat.get_product_ids().as_ref() {
+                for (x_i, x) in product_ids.iter().enumerate() {
+                    ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/threats/{}/product_ids/{}", v_i, threat_i, x_i)));
+                }
             }
         }
     }
@@ -73,72 +101,53 @@ pub fn gather_product_references(doc: &impl CsafTrait) -> HashSet<String> {
     ids
 }
 
-pub fn gather_product_definitions_from_branch(branch: &impl BranchTrait) -> Vec<String> {
-    let mut ids = Vec::<String>::new();
-
+fn gather_product_definitions_from_branch(
+    branch: &impl BranchTrait,
+    ids: &mut Vec<(String, String)>,
+    path: &str
+) {
     // Gather from /product/product_id
     if let Some(product) = branch.get_product() {
-        ids.push(product.get_product_id().to_owned());
+        ids.push((
+            product.get_product_id().to_owned(),
+            format!("{}/product/product_id", path)
+        ));
     }
 
-    // Go into the branch
-    if let Some(x) = branch.get_branches().as_ref() {
-        ids.extend(
-            x.iter()
-                .flat_map(|x| gather_product_definitions_from_branch(x)),
-        )
-    }
-
-    ids
-}
-
-pub fn check_branch_depth(branch: &impl BranchTrait, max_depth: u32, depth: u32) -> bool {
-    // Recurse into sub-branches.
-    if let Some(x) = branch.get_branches().as_ref() {
-        if depth == max_depth {
-            // Since we are inspecting the children, they will have a depth of max_depth + 1.
-            return false
-        }
-        if !x.iter().all(|x| check_branch_depth(x, max_depth, depth + 1)) {
-            // Check recursively if any sub-branch exceeds the recursion limit.
-            return false
+    // Go into the sub-branches
+    if let Some(branches) = branch.get_branches().as_ref() {
+        for (i, b) in branches.iter().enumerate() {
+            gather_product_definitions_from_branch(b, ids, &format!("{}/branches/{}", path, i));
         }
     }
-    true
 }
 
-pub fn check_branch_depth_tree(tree: &impl ProductTreeTrait, max_depth: u32) -> bool {
-    // All children of the root branch have depth 1, perform recursive depth check on them.
-    if let Some(x) = tree.get_branches().as_ref() {
-        x.iter().all(|x| check_branch_depth(x, max_depth, 1))
-    } else {
-        true
-    }
-}
-
-pub fn gather_product_definitions(doc: &impl CsafTrait) -> Vec<String> {
-    let mut ids = Vec::<String>::new();
+pub fn gather_product_definitions(doc: &impl CsafTrait) -> Vec<(String, String)> {
+    let mut ids = Vec::<(String, String)>::new();
 
     if let Some(tree) = doc.get_product_tree().as_ref() {
         // /product_tree/branches[](/branches[])*/product/product_id
-        if let Some(branch) = tree.get_branches().as_ref() {
-            for sub_branch in branch.iter() {
-                ids.extend(
-                    gather_product_definitions_from_branch(sub_branch).iter()
-                        .map(|x| x.to_owned())
-                );
+        if let Some(branches) = tree.get_branches().as_ref() {
+            for (i, branch) in branches.iter().enumerate() {
+                gather_product_definitions_from_branch(branch, &mut ids, &format!("/product_tree/branches/{}", i));
             }
         }
 
         // /product_tree/full_product_names[]/product_id
-        ids.extend(tree.get_full_product_names().iter().map(|x| x.get_product_id().to_owned()));
+        for (i, fpn) in tree.get_full_product_names().iter().enumerate() {
+            ids.push((
+                fpn.get_product_id().to_owned(),
+                format!("/product_tree/full_product_names/{}/product_id", i)
+            ));
+        }
 
         // /product_tree/relationships[]/full_product_name/product_id
-        ids.extend(
-            tree.get_relationships()
-                .iter()
-                .map(|x| x.get_full_product_name().get_product_id().to_owned()),
-        );
+        for (i, rel) in tree.get_relationships().iter().enumerate() {
+            ids.push((
+                rel.get_full_product_name().get_product_id().to_owned(),
+                format!("/product_tree/relationships/{}/full_product_name/product_id", i)
+            ));
+        }
     }
 
     ids

@@ -82,12 +82,12 @@ pub trait RemediationTrait {
             None
         } else {
             let mut product_set: BTreeSet<String> = match self.get_product_ids() {
-                Some(product_ids) => product_ids.iter().map(|p| p.to_string()).collect(),
+                Some(product_ids) => product_ids.iter().map(|id| (*id).to_owned()).collect(),
                 None => BTreeSet::new(),
             };
             if let Some(product_groups) = self.get_group_ids() {
                 if let Some(product_ids) = resolve_product_groups(doc, product_groups) {
-                    product_set.extend(product_ids.iter().map(|p| p.to_string()));
+                    product_set.extend(product_ids.iter().map(|id| id.to_owned()));
                 }
             }
             Some(product_set)
