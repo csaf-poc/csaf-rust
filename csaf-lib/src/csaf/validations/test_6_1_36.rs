@@ -1,7 +1,7 @@
-use std::collections::HashSet;
 use crate::csaf::csaf2_1::schema::CategoryOfTheRemediation;
 use crate::csaf::getter_traits::{CsafTrait, ProductStatusTrait, RemediationTrait, VulnerabilityTrait};
 use crate::csaf::validation::ValidationError;
+use std::collections::HashSet;
 
 /// Remediation categories that conflict with the product status "not affected".
 const NOT_AFFECTED_CONFLICTS: &[CategoryOfTheRemediation] = &[
@@ -81,38 +81,30 @@ pub fn test_6_1_36_status_group_contradicting_remediation_categories(
 
 #[cfg(test)]
 mod tests {
-    use crate::csaf::csaf2_1::loader::load_document;
+    use std::collections::HashMap;
+    use crate::csaf::test_helper::run_csaf21_tests;
     use crate::csaf::validation::ValidationError;
     use crate::csaf::validations::test_6_1_36::test_6_1_36_status_group_contradicting_remediation_categories;
 
     #[test]
     fn test_test_6_1_36() {
-        for x in ["11", "12", "13"].iter() {
-            let doc = load_document(format!("../csaf/csaf_2.1/test/validator/data/mandatory/oasis_csaf_tc-csaf_2_1-2024-6-1-36-{}.json", x).as_str()).unwrap();
-            assert_eq!(
-                Ok(()),
-                test_6_1_36_status_group_contradicting_remediation_categories(&doc)
-            )
-        }
-        for (x, err) in [
-            ("01", ValidationError {
-                message: "Product CSAFPID-9080700 is listed as not affected but has conflicting remediation category vendor_fix".to_string(),
-                instance_path: "/vulnerabilities/0/remediations/0".to_string()
-            }),
-            ("02", ValidationError {
-                message: "Product CSAFPID-9080703 is listed as fixed but has conflicting remediation category none_available".to_string(),
-                instance_path: "/vulnerabilities/0/remediations/0".to_string()
-            }),
-            ("03", ValidationError {
-                message: "Product CSAFPID-9080700 is listed as affected but has conflicting remediation category optional_patch".to_string(),
-                instance_path: "/vulnerabilities/0/remediations/0".to_string(),
-            }),
-        ].iter() {
-            let doc = load_document(format!("../csaf/csaf_2.1/test/validator/data/mandatory/oasis_csaf_tc-csaf_2_1-2024-6-1-36-{}.json", x).as_str()).unwrap();
-            assert_eq!(
-                Err(err.clone()),
-                test_6_1_36_status_group_contradicting_remediation_categories(&doc)
-            )
-        }
+        run_csaf21_tests(
+            "36",
+            test_6_1_36_status_group_contradicting_remediation_categories,
+            HashMap::from([
+                ("01", &ValidationError {
+                    message: "Product CSAFPID-9080700 is listed as not affected but has conflicting remediation category vendor_fix".to_string(),
+                    instance_path: "/vulnerabilities/0/remediations/0".to_string()
+                }),
+                ("02", &ValidationError {
+                    message: "Product CSAFPID-9080703 is listed as fixed but has conflicting remediation category none_available".to_string(),
+                    instance_path: "/vulnerabilities/0/remediations/0".to_string()
+                }),
+                ("03", &ValidationError {
+                    message: "Product CSAFPID-9080700 is listed as affected but has conflicting remediation category optional_patch".to_string(),
+                    instance_path: "/vulnerabilities/0/remediations/0".to_string(),
+                }),
+            ]),
+        );
     }
 }

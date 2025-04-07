@@ -1,13 +1,18 @@
-use crate::csaf::getter_traits::CsafTrait;
-use crate::csaf::product_helpers::{gather_product_definitions, gather_product_references};
+use crate::csaf::getter_traits::{CsafTrait, ProductTrait, ProductTreeTrait};
+use crate::csaf::product_helpers::gather_product_references;
 use std::collections::HashSet;
 use crate::csaf::validation::ValidationError;
 
 pub fn test_6_1_01_missing_definition_of_product_id(
     doc: &impl CsafTrait,
 ) -> Result<(), ValidationError> {
-    let definitions = gather_product_definitions(doc);
-    let definitions_set = HashSet::<String>::from_iter(definitions.iter().map(|x| x.1.to_owned()));
+    let mut definitions_set = HashSet::<String>::new();
+    if let Some(tree) = doc.get_product_tree().as_ref() {
+        _ = tree.visit_all_products(&mut |fpn, _path| {
+            definitions_set.insert(fpn.get_product_id().to_owned());
+            Ok(())
+        });
+    }
     let references = gather_product_references(doc);
 
     for (ref_id, ref_path) in references.iter() {
@@ -24,8 +29,9 @@ pub fn test_6_1_01_missing_definition_of_product_id(
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
     use crate::csaf::csaf2_0::loader::load_document as load_20;
-    use crate::csaf::csaf2_1::loader::load_document as load_21;
+    use crate::csaf::test_helper::run_csaf21_tests;
     use crate::csaf::validation::ValidationError;
     use crate::csaf::validations::test_6_1_01::test_6_1_01_missing_definition_of_product_id;
 
@@ -46,13 +52,11 @@ mod tests {
 
     #[test]
     fn test_6_1_01_csaf_2_1() {
-        let doc = load_21("../csaf/csaf_2.1/test/validator/data/mandatory/oasis_csaf_tc-csaf_2_1-2024-6-1-01-01.json").unwrap();
-        assert_eq!(
-            test_6_1_01_missing_definition_of_product_id(&doc),
-            Err(ValidationError {
+        run_csaf21_tests("01", test_6_1_01_missing_definition_of_product_id, HashMap::from([
+            ("01", &ValidationError {
                 message: EXPECTED_ERROR.to_string(),
                 instance_path: EXPECTED_INSTANCE_PATH.to_string(),
             })
-        );
+        ]));
     }
 }

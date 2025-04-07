@@ -95,7 +95,14 @@ pub fn test_6_1_37_date_and_time(
 
 fn check_datetime(date_time: &String, instance_path: &str) -> Result<(), ValidationError> {
     if get_rfc3339_regex().is_match(date_time) {
-        Ok(())
+        // Add chrono-based plausibility check
+        match chrono::DateTime::parse_from_rfc3339(date_time) {
+            Ok(_) => Ok(()), // Successfully parsed as a valid RFC3339 datetime
+            Err(e) => Err(ValidationError {
+                message: format!("Date-time string {} matched RFC3339 regex but failed chrono parsing: {}", date_time, e),
+                instance_path: instance_path.to_string(),
+            }),
+        }
     } else {
         Err(ValidationError {
             message: format!("Invalid date-time string {}, expected RFC3339-compliant format with non-empty timezone", date_time),
@@ -106,33 +113,37 @@ fn check_datetime(date_time: &String, instance_path: &str) -> Result<(), Validat
 
 #[cfg(test)]
 mod tests {
-    use crate::csaf::csaf2_1::loader::load_document;
+    use crate::csaf::test_helper::run_csaf21_tests;
     use crate::csaf::validation::ValidationError;
     use crate::csaf::validations::test_6_1_37::test_6_1_37_date_and_time;
+    use std::collections::HashMap;
 
     #[test]
     fn test_test_6_1_37() {
-        for x in ["11"].iter() {
-            let doc = load_document(format!("../csaf/csaf_2.1/test/validator/data/mandatory/oasis_csaf_tc-csaf_2_1-2024-6-1-37-{}.json", x).as_str()).unwrap();
-            assert_eq!(
-                Ok(()),
-                test_6_1_37_date_and_time(&doc)
-            )
-        }
-        for (x, err) in [
-            ("01", ValidationError {
-                message: "Invalid date-time string 2024-01-24 10:00:00.000Z, expected RFC3339-compliant format with non-empty timezone".to_string(),
-                instance_path: "/document/tracking/initial_release_date".to_string()
-            }),
-        ].iter() {
-            let doc_result = load_document(format!("../csaf/csaf_2.1/test/validator/data/mandatory/oasis_csaf_tc-csaf_2_1-2024-6-1-37-{}.json", x).as_str());
-            match doc_result {
-                Ok(doc) => {
-                    let result = test_6_1_37_date_and_time(&doc);
-                    assert_eq!(result, Err(err.clone()));
-                },
-                Err(error) => panic!("Unexpected error: {:?}", error),
-            }
-        }
+        run_csaf21_tests(
+            "37",
+            test_6_1_37_date_and_time, HashMap::from([
+                ("01", &ValidationError {
+                    message: "Invalid date-time string 2024-01-24 10:00:00.000Z, expected RFC3339-compliant format with non-empty timezone".to_string(),
+                    instance_path: "/document/tracking/initial_release_date".to_string(),
+                }),
+                ("02", &ValidationError {
+                    message: "Invalid date-time string 2024-01-24T10:00:00.000z, expected RFC3339-compliant format with non-empty timezone".to_string(),
+                    instance_path: "/document/tracking/initial_release_date".to_string(),
+                }),
+                ("03", &ValidationError {
+                    message: "Date-time string 2014-13-31T00:00:00+01:00 matched RFC3339 regex but failed chrono parsing: input is out of range".to_string(),
+                    instance_path: "/vulnerabilities/0/discovery_date".to_string(),
+                }),
+                ("04", &ValidationError {
+                    message: "Date-time string 2023-02-30T00:00:00+01:00 matched RFC3339 regex but failed chrono parsing: input is out of range".to_string(),
+                    instance_path: "/vulnerabilities/0/discovery_date".to_string(),
+                }),
+                ("05", &ValidationError {
+                    message: "Date-time string 1900-02-29T00:00:00+01:00 matched RFC3339 regex but failed chrono parsing: input is out of range".to_string(),
+                    instance_path: "/vulnerabilities/0/discovery_date".to_string(),
+                }),
+            ])
+        );
     }
 }

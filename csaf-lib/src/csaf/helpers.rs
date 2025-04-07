@@ -17,3 +17,27 @@ where
             .collect()
     })
 }
+
+/// Counts the number of unescaped '*' characters in a given string.
+/// An asterisk is considered "unescaped" if it is not preceded by a backslash ('\\').
+/// Consecutive backslashes alternate between escaping or not escaping characters.
+///
+/// # Arguments
+///
+/// * `s` - A string slice to be analyzed.
+///
+/// # Returns
+///
+/// Returns the number of unescaped '*' characters found in the string.
+pub fn count_unescaped_stars(s: &str) -> u32 {
+    let mut escaped = false;
+    let mut count = 0u32;
+    for c in s.chars() {
+        match c {
+            '\\' => escaped = !escaped,
+            '*' if !escaped => count += 1,
+            _ => escaped = false,
+        }
+    }
+    count
+}

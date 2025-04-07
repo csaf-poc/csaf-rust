@@ -1,10 +1,11 @@
-use crate::csaf::csaf2_1::schema::{Branch, CategoryOfTheRemediation, CommonSecurityAdvisoryFramework, DocumentGenerator, DocumentLevelMetaData, Flag, FullProductNameT, Involvement, Metric, ProductGroup, ProductStatus, ProductTree, Relationship, Remediation, Revision, Threat, Tracking, Vulnerability};
-use crate::csaf::getter_traits::{BranchTrait, CsafTrait, DocumentTrait, FlagTrait, FullProductNameTrait, GeneratorTrait, InvolvementTrait, MetricTrait, ProductGroupTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, RevisionTrait, ThreatTrait, TrackingTrait, VulnerabilityTrait};
+use crate::csaf::csaf2_1::schema::{Branch, CategoryOfTheRemediation, CommonSecurityAdvisoryFramework, DocumentGenerator, DocumentLevelMetaData, DocumentStatus, Flag, FullProductNameT, HelperToIdentifyTheProduct, Involvement, LabelOfTlp, Metric, ProductGroup, ProductStatus, ProductTree, Relationship, Remediation, Revision, RulesForSharingDocument, SharingGroup, Threat, Tracking, TrafficLightProtocolTlp, Vulnerability};
+use crate::csaf::getter_traits::{BranchTrait, CsafTrait, DistributionTrait, DocumentTrait, FlagTrait, ProductTrait, GeneratorTrait, InvolvementTrait, MetricTrait, ProductGroupTrait, ProductIdentificationHelperTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, RevisionTrait, SharingGroupTrait, ThreatTrait, TlpTrait, TrackingTrait, VulnerabilityTrait};
 use std::ops::Deref;
+use crate::csaf::validation::ValidationError;
 
 impl RemediationTrait for Remediation {
     fn get_category(&self) -> CategoryOfTheRemediation {
-        self.category.clone()
+        self.category
     }
 
     fn get_product_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
@@ -143,9 +144,55 @@ impl CsafTrait for CommonSecurityAdvisoryFramework {
 
 impl DocumentTrait for DocumentLevelMetaData {
     type TrackingType = Tracking;
+    type DistributionType = RulesForSharingDocument;
 
     fn get_tracking(&self) -> &Self::TrackingType {
         &self.tracking
+    }
+
+    /// We normalize to Option here because property was optional in CSAF 2.0
+    fn get_distribution_21(&self) -> Result<&Self::DistributionType, ValidationError> {
+        Ok(&self.distribution)
+    }
+
+    /// Always return the value because it is mandatory
+    fn get_distribution_20(&self) -> Option<&Self::DistributionType> {
+        Some(&self.distribution)
+    }
+}
+
+impl DistributionTrait for RulesForSharingDocument {
+    type SharingGroupType = SharingGroup;
+    type TlpType = TrafficLightProtocolTlp;
+
+    fn get_sharing_group(&self) -> &Option<Self::SharingGroupType> {
+        &self.sharing_group
+    }
+
+    /// We normalize to Option here because property was optional in CSAF 2.0
+    fn get_tlp_20(&self) -> Option<&Self::TlpType> {
+        Some(&self.tlp)
+    }
+
+    /// Always return the value because it is mandatory
+    fn get_tlp_21(&self) -> Result<&Self::TlpType, ValidationError> {
+        Ok(&self.tlp)
+    }
+}
+
+impl SharingGroupTrait for SharingGroup {
+    fn get_id(&self) -> &String {
+        &self.id
+    }
+
+    fn get_name(&self) -> Option<&String> {
+        self.name.as_ref().map(|x| x.deref())
+    }
+}
+
+impl TlpTrait for TrafficLightProtocolTlp {
+    fn get_label(&self) -> LabelOfTlp {
+        self.label
     }
 }
 
@@ -167,6 +214,10 @@ impl TrackingTrait for Tracking {
 
     fn get_revision_history(&self) -> &Vec<Self::RevisionType> {
         &self.revision_history
+    }
+
+    fn get_status(&self) -> DocumentStatus {
+        self.status
     }
 }
 
@@ -209,17 +260,18 @@ impl ProductTreeTrait for ProductTree {
     fn get_full_product_names(&self) -> &Vec<Self::FullProductNameType> {
         &self.full_product_names
     }
+
+    fn visit_all_products(&self, callback: &mut impl FnMut(&Self::FullProductNameType, &str) -> Result<(), ValidationError>) -> Result<(), ValidationError> {
+        self.visit_all_products_generic(callback)
+    }
 }
 
-impl BranchTrait for Branch {
-    type BranchType = Branch;
-    type FullProductNameType = FullProductNameT;
-
-    fn get_branches(&self) -> Option<&Vec<Self::BranchType>> {
+impl BranchTrait<FullProductNameT> for Branch {
+    fn get_branches(&self) -> Option<&Vec<Self>> {
         self.branches.as_ref().map(|branches| branches.deref())
     }
 
-    fn get_product(&self) -> &Option<Self::FullProductNameType> {
+    fn get_product(&self) -> &Option<FullProductNameT> {
         &self.product
     }
 }
@@ -234,9 +286,7 @@ impl ProductGroupTrait for ProductGroup {
     }
 }
 
-impl RelationshipTrait for Relationship {
-    type FullProductNameType = FullProductNameT;
-
+impl RelationshipTrait<FullProductNameT> for Relationship {
     fn get_product_reference(&self) -> &String {
         self.product_reference.deref()
     }
@@ -245,13 +295,33 @@ impl RelationshipTrait for Relationship {
         self.relates_to_product_reference.deref()
     }
 
-    fn get_full_product_name(&self) -> &Self::FullProductNameType {
+    fn get_full_product_name(&self) -> &FullProductNameT {
         &self.full_product_name
     }
 }
 
-impl FullProductNameTrait for FullProductNameT {
+impl ProductTrait for FullProductNameT {
+    type ProductIdentificationHelperType = HelperToIdentifyTheProduct;
+
     fn get_product_id(&self) -> &String {
         self.product_id.deref()
+    }
+
+    fn get_product_identification_helper(&self) -> &Option<Self::ProductIdentificationHelperType> {
+        &self.product_identification_helper
+    }
+}
+
+impl ProductIdentificationHelperTrait for HelperToIdentifyTheProduct {
+    fn get_purls(&self) -> Option<&[String]> {
+        self.purls.as_ref().map(|v| v.as_slice())
+    }
+
+    fn get_model_numbers(&self) -> Option<impl Iterator<Item = &String> + '_> {
+        self.model_numbers.as_ref().map(|v| v.iter().map(|x| x.deref()))
+    }
+
+    fn get_serial_numbers(&self) -> Option<impl Iterator<Item = &String> + '_> {
+        self.serial_numbers.as_ref().map(|v| v.iter().map(|x| x.deref()))
     }
 }

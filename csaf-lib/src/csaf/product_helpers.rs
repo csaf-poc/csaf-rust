@@ -1,4 +1,4 @@
-use crate::csaf::getter_traits::{BranchTrait, CsafTrait, FullProductNameTrait, MetricTrait, ProductGroupTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, ThreatTrait, VulnerabilityTrait};
+use crate::csaf::getter_traits::{CsafTrait, MetricTrait, ProductGroupTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, ThreatTrait, VulnerabilityTrait};
 
 pub fn gather_product_references(doc: &impl CsafTrait) -> Vec<(String, String)> {
     let mut ids = Vec::<(String, String)>::new();
@@ -95,58 +95,6 @@ pub fn gather_product_references(doc: &impl CsafTrait) -> Vec<(String, String)> 
                     ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/threats/{}/product_ids/{}", v_i, threat_i, x_i)));
                 }
             }
-        }
-    }
-
-    ids
-}
-
-fn gather_product_definitions_from_branch(
-    branch: &impl BranchTrait,
-    ids: &mut Vec<(String, String)>,
-    path: &str
-) {
-    // Gather from /product/product_id
-    if let Some(product) = branch.get_product() {
-        ids.push((
-            product.get_product_id().to_owned(),
-            format!("{}/product/product_id", path)
-        ));
-    }
-
-    // Go into the sub-branches
-    if let Some(branches) = branch.get_branches().as_ref() {
-        for (i, b) in branches.iter().enumerate() {
-            gather_product_definitions_from_branch(b, ids, &format!("{}/branches/{}", path, i));
-        }
-    }
-}
-
-pub fn gather_product_definitions(doc: &impl CsafTrait) -> Vec<(String, String)> {
-    let mut ids = Vec::<(String, String)>::new();
-
-    if let Some(tree) = doc.get_product_tree().as_ref() {
-        // /product_tree/branches[](/branches[])*/product/product_id
-        if let Some(branches) = tree.get_branches().as_ref() {
-            for (i, branch) in branches.iter().enumerate() {
-                gather_product_definitions_from_branch(branch, &mut ids, &format!("/product_tree/branches/{}", i));
-            }
-        }
-
-        // /product_tree/full_product_names[]/product_id
-        for (i, fpn) in tree.get_full_product_names().iter().enumerate() {
-            ids.push((
-                fpn.get_product_id().to_owned(),
-                format!("/product_tree/full_product_names/{}/product_id", i)
-            ));
-        }
-
-        // /product_tree/relationships[]/full_product_name/product_id
-        for (i, rel) in tree.get_relationships().iter().enumerate() {
-            ids.push((
-                rel.get_full_product_name().get_product_id().to_owned(),
-                format!("/product_tree/relationships/{}/full_product_name/product_id", i)
-            ));
         }
     }
 

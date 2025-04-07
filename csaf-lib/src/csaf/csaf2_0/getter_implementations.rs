@@ -1,7 +1,8 @@
-use crate::csaf::csaf2_0::schema::{Branch, CategoryOfTheRemediation, CommonSecurityAdvisoryFramework, DocumentGenerator, DocumentLevelMetaData, Flag, FullProductNameT, Involvement, ProductGroup, ProductStatus, ProductTree, Relationship, Remediation, Revision, Threat, Tracking, Vulnerability};
-use crate::csaf::csaf2_1::schema::{CategoryOfTheRemediation as Remediation21};
-use crate::csaf::getter_traits::{BranchTrait, CsafTrait, DocumentTrait, FlagTrait, FullProductNameTrait, GeneratorTrait, InvolvementTrait, MetricTrait, ProductGroupTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, RevisionTrait, ThreatTrait, TrackingTrait, VulnerabilityTrait};
+use crate::csaf::csaf2_0::schema::{Branch, CategoryOfTheRemediation, CommonSecurityAdvisoryFramework, DocumentGenerator, DocumentLevelMetaData, DocumentStatus, Flag, FullProductNameT, HelperToIdentifyTheProduct, Involvement, LabelOfTlp, ProductGroup, ProductStatus, ProductTree, Relationship, Remediation, Revision, RulesForSharingDocument, Threat, Tracking, TrafficLightProtocolTlp, Vulnerability};
+use crate::csaf::csaf2_1::schema::{CategoryOfTheRemediation as Remediation21, DocumentStatus as Status21, LabelOfTlp as Tlp21};
+use crate::csaf::getter_traits::{BranchTrait, CsafTrait, DistributionTrait, DocumentTrait, FlagTrait, ProductTrait, GeneratorTrait, InvolvementTrait, MetricTrait, ProductGroupTrait, ProductIdentificationHelperTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, RevisionTrait, SharingGroupTrait, ThreatTrait, TlpTrait, TrackingTrait, VulnerabilityTrait};
 use std::ops::Deref;
+use crate::csaf::validation::ValidationError;
 
 impl RemediationTrait for Remediation {
     /// Normalizes the remediation categories from CSAF 2.0 to those of CSAF 2.1.
@@ -168,9 +169,81 @@ impl CsafTrait for CommonSecurityAdvisoryFramework {
 
 impl DocumentTrait for DocumentLevelMetaData {
     type TrackingType = Tracking;
+    type DistributionType = RulesForSharingDocument;
 
     fn get_tracking(&self) -> &Self::TrackingType {
         &self.tracking
+    }
+
+    /// Return distribution as ref Option, it is optional anyways
+    fn get_distribution_20(&self) -> Option<&Self::DistributionType> {
+        self.distribution.as_ref()
+    }
+
+    /// Return distribution or a Validation error to satisfy CSAF 2.1 semantics
+    fn get_distribution_21(&self) -> Result<&Self::DistributionType, ValidationError> {
+        match self.distribution.as_ref() {
+            None => Err(ValidationError {
+                message: "CSAF 2.1 requires the distribution property, but it is not set.".to_string(),
+                instance_path: "/document/distribution".to_string()
+            }),
+            Some(distribution) => Ok(distribution)
+        }
+    }
+}
+
+impl DistributionTrait for RulesForSharingDocument {
+    type SharingGroupType = ();
+    type TlpType = TrafficLightProtocolTlp;
+
+    fn get_sharing_group(&self) -> &Option<Self::SharingGroupType> {
+        &None
+    }
+
+    /// Return TLP as ref Option, it is an option anyway
+    fn get_tlp_20(&self) -> Option<&Self::TlpType> {
+        self.tlp.as_ref()
+    }
+
+    /// Return TLP or a ValidationError to satisfy CSAF 2.1 semantics
+    fn get_tlp_21(&self) -> Result<&Self::TlpType, ValidationError> {
+        match self.tlp.as_ref() {
+            None => Err(ValidationError {
+                message: "CSAF 2.1 requires the TLP property, but it is not set.".to_string(),
+                instance_path: "/document/distribution/sharing_group/tlp".to_string()
+            }),
+            Some(tlp) => Ok(tlp)
+        }
+    }
+}
+
+impl SharingGroupTrait for () {
+    fn get_id(&self) -> &String {
+        panic!("Sharing groups are not implemented in CSAF 2.0");
+    }
+
+    fn get_name(&self) -> Option<&String> {
+        panic!("Sharing groups are not implemented in CSAF 2.0");
+    }
+}
+
+impl TlpTrait for TrafficLightProtocolTlp {
+    /// Normalizes the TLP (Traffic Light Protocol) labels from CSAF 2.0 to those of CSAF 2.1.
+    ///
+    /// # Explanation
+    /// In CSAF 2.1, the TLP labeling scheme was updated to align with the official TLP 2.0 standard,
+    /// which renamed "WHITE" to "CLEAR". This function ensures that TLP labels from CSAF 2.0
+    /// are converted to their corresponding labels in CSAF 2.1.
+    ///
+    /// # Returns
+    /// A CSAF 2.1 `Tlp21` value that corresponds to the TLP label of the current object.
+    fn get_label(&self) -> Tlp21 {
+        match self.label {
+            LabelOfTlp::Amber => Tlp21::Amber,
+            LabelOfTlp::Green => Tlp21::Green,
+            LabelOfTlp::Red => Tlp21::Red,
+            LabelOfTlp::White => Tlp21::Clear,
+        }
     }
 }
 
@@ -192,6 +265,14 @@ impl TrackingTrait for Tracking {
 
     fn get_revision_history(&self) -> &Vec<Self::RevisionType> {
         &self.revision_history
+    }
+
+    fn get_status(&self) -> Status21 {
+        match self.status {
+            DocumentStatus::Draft => Status21::Draft,
+            DocumentStatus::Final => Status21::Final,
+            DocumentStatus::Interim => Status21::Interim,
+        }
     }
 }
 
@@ -234,17 +315,18 @@ impl ProductTreeTrait for ProductTree {
     fn get_full_product_names(&self) -> &Vec<Self::FullProductNameType> {
         &self.full_product_names
     }
+
+    fn visit_all_products(&self, callback: &mut impl FnMut(&Self::FullProductNameType, &str) -> Result<(), ValidationError>) -> Result<(), ValidationError> {
+        self.visit_all_products_generic(callback)
+    }
 }
 
-impl BranchTrait for Branch {
-    type BranchType = Branch;
-    type FullProductNameType = FullProductNameT;
-
-    fn get_branches(&self) -> Option<&Vec<Self::BranchType>> {
+impl BranchTrait<FullProductNameT> for Branch {
+    fn get_branches(&self) -> Option<&Vec<Self>> {
         self.branches.as_ref().map(|branches| branches.deref())
     }
 
-    fn get_product(&self) -> &Option<Self::FullProductNameType> {
+    fn get_product(&self) -> &Option<FullProductNameT> {
         &self.product
     }
 }
@@ -259,9 +341,7 @@ impl ProductGroupTrait for ProductGroup {
     }
 }
 
-impl RelationshipTrait for Relationship {
-    type FullProductNameType = FullProductNameT;
-
+impl RelationshipTrait<FullProductNameT> for Relationship {
     fn get_product_reference(&self) -> &String {
         self.product_reference.deref()
     }
@@ -270,13 +350,33 @@ impl RelationshipTrait for Relationship {
         self.relates_to_product_reference.deref()
     }
 
-    fn get_full_product_name(&self) -> &Self::FullProductNameType {
+    fn get_full_product_name(&self) -> &FullProductNameT {
         &self.full_product_name
     }
 }
 
-impl FullProductNameTrait for FullProductNameT {
+impl ProductTrait for FullProductNameT {
+    type ProductIdentificationHelperType = HelperToIdentifyTheProduct;
+
     fn get_product_id(&self) -> &String {
         self.product_id.deref()
+    }
+
+    fn get_product_identification_helper(&self) -> &Option<Self::ProductIdentificationHelperType> {
+        &self.product_identification_helper
+    }
+}
+
+impl ProductIdentificationHelperTrait for HelperToIdentifyTheProduct {
+    fn get_purls(&self) -> Option<&[String]> {
+        self.purl.as_ref().map(|purl| std::slice::from_ref(purl))
+    }
+
+    fn get_model_numbers(&self) -> Option<impl Iterator<Item = &String> + '_> {
+        self.model_numbers.as_ref().map(|v| v.iter().map(|x| x.deref()))
+    }
+
+    fn get_serial_numbers(&self) -> Option<impl Iterator<Item = &String> + '_> {
+        self.serial_numbers.as_ref().map(|v| v.iter().map(|x| x.deref()))
     }
 }

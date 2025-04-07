@@ -1,6 +1,7 @@
 use std::collections::{BTreeSet, HashSet};
-use crate::csaf::csaf2_1::schema::CategoryOfTheRemediation;
+use crate::csaf::csaf2_1::schema::{CategoryOfTheRemediation, DocumentStatus, LabelOfTlp};
 use crate::csaf::helpers::resolve_product_groups;
+use crate::csaf::validation::ValidationError;
 
 /// Trait representing an abstract Common Security Advisory Framework (CSAF) document.
 ///
@@ -32,8 +33,50 @@ pub trait DocumentTrait {
     /// Type representing document tracking information
     type TrackingType: TrackingTrait;
 
+    /// Type representing document distribution information
+    type DistributionType: DistributionTrait;
+
     /// Returns the tracking information for this document
     fn get_tracking(&self) -> &Self::TrackingType;
+
+    /// Returns the distribution information for this document with CSAF 2.1 semantics
+    fn get_distribution_21(&self) -> Result<&Self::DistributionType, ValidationError>;
+
+    /// Returns the distribution information for this document with CSAF 2.0 semantics
+    fn get_distribution_20(&self) -> Option<&Self::DistributionType>;
+}
+
+/// Trait representing distribution information for a document
+pub trait DistributionTrait {
+    /// Type representing sharing group information
+    type SharingGroupType: SharingGroupTrait;
+
+    /// Type representing TLP (Traffic Light Protocol) information
+    type TlpType: TlpTrait;
+
+    /// Returns the sharing group for this distribution
+    fn get_sharing_group(&self) -> &Option<Self::SharingGroupType>;
+
+    /// Returns the TLP information for this distribution with CSAF 2.0 semantics
+    fn get_tlp_20(&self) -> Option<&Self::TlpType>;
+
+    /// Returns the TLP information for this distribution with CSAF 2.1 semantics
+    fn get_tlp_21(&self) -> Result<&Self::TlpType, ValidationError>;
+}
+
+/// Trait representing sharing group information
+pub trait SharingGroupTrait {
+    /// Returns the ID of the sharing group
+    fn get_id(&self) -> &String;
+
+    /// Returns the optional name of the sharing group
+    fn get_name(&self) -> Option<&String>;
+}
+
+/// Trait representing TLP (Traffic Light Protocol) information
+pub trait TlpTrait {
+    /// Returns the TLP label
+    fn get_label(&self) -> LabelOfTlp;
 }
 
 pub trait TrackingTrait {
@@ -54,6 +97,9 @@ pub trait TrackingTrait {
 
     /// Returns the revision history for this document
     fn get_revision_history(&self) -> &Vec<Self::RevisionType>;
+
+    /// Returns the status of this document
+    fn get_status(&self) -> DocumentStatus;
 }
 
 /// Trait for accessing document generator information
@@ -283,16 +329,16 @@ pub trait ThreatTrait {
 /// access to its product groups.
 pub trait ProductTreeTrait {
     /// The associated type representing the type of branch in the product tree.
-    type BranchType: BranchTrait;
+    type BranchType: BranchTrait<Self::FullProductNameType>;
 
     /// The associated type representing the type of product groups in the product tree.
     type ProductGroupType: ProductGroupTrait;
 
     /// The associated type representing the type of relationships in the product tree.
-    type RelationshipType: RelationshipTrait;
+    type RelationshipType: RelationshipTrait<Self::FullProductNameType>;
 
     /// The associated type representing the type of full product name.
-    type FullProductNameType: FullProductNameTrait;
+    type FullProductNameType: ProductTrait;
 
     /// Returns an optional reference to the list of branches in the product tree.
     fn get_branches(&self) -> Option<&Vec<Self::BranchType>>;
@@ -305,21 +351,143 @@ pub trait ProductTreeTrait {
 
     /// Retrieves a reference to the list of full product names in the product tree.
     fn get_full_product_names(&self) -> &Vec<Self::FullProductNameType>;
+
+    /// Visits all product references in the product tree by invoking the provided callback for each
+    /// product. Returns immediately with the error Result provided by `callback`, if occurring.
+    ///
+    /// This method traverses all locations in the product tree where products can be referenced:
+    /// - Products within branches (recursively)
+    /// - Full product names at the top level
+    /// - Full product names within relationships
+    ///
+    /// # Parameters
+    /// * `callback` - A mutable function that takes a reference to a product and its path string,
+    ///   and returns a `Result<(), ValidationError>`. The path string represents the JSON pointer
+    ///   to the product's location in the document.
+    ///
+    /// # Returns
+    /// * `Ok(())` if all products were visited successfully
+    /// * `Err(ValidationError)` if the callback returned an error for any product
+    fn visit_all_products_generic(
+        &self,
+        callback: &mut impl FnMut(&Self::FullProductNameType, &str) -> Result<(), ValidationError>
+    ) -> Result<(), ValidationError> {
+        // Visit products in branches
+        if let Some(branches) = self.get_branches().as_ref() {
+            for (i, branch) in branches.iter().enumerate() {
+                branch.visit_branches_rec(&format!("/product_tree/branches/{}", i), &mut |branch: &Self::BranchType, path| {
+                    if let Some(product_ref) = branch.get_product() {
+                        callback(product_ref, &format!("{}/product", path))?;
+                    }
+                    Ok(())
+                })?;
+            }
+        }
+
+        // Visit full_product_names
+        for (i, fpn) in self.get_full_product_names().iter().enumerate() {
+            callback(
+                fpn,
+                &format!("/product_tree/full_product_names/{}", i),
+            )?;
+        }
+
+        // Visit relationships
+        for (i, rel) in self.get_relationships().iter().enumerate() {
+            callback(
+                rel.get_full_product_name(),
+                &format!("/product_tree/relationships/{}/full_product_name", i),
+            )?;
+        }
+
+        Ok(())
+    }
+
+    /// A trait wrapper for `visit_all_products_generic()` that allows implementations to provide
+    /// type-specific callbacks for product traversal.
+    ///
+    /// This method is intended to be implemented by trait objects to handle their specific
+    /// product name types while reusing the generic traversal logic defined in
+    /// `visit_all_products_generic()`.
+    ///
+    /// # Parameters
+    /// * `callback` - A mutable function that takes a reference to a product and its path string,
+    ///   returning a `Result<(), ValidationError>`. The callback will be invoked with the concrete
+    ///   type specified by the implementing trait.
+    ///
+    /// # Returns
+    /// * `Ok(())` if all products were visited successfully
+    /// * `Err(ValidationError)` if the callback returned an error for any product
+    ///
+    /// # Implementation Note
+    /// Trait implementers should typically implement this by delegating to
+    /// `visit_all_products_generic()` with the same callback.
+    fn visit_all_products(
+        &self,
+        callback: &mut impl FnMut(&Self::FullProductNameType, &str) -> Result<(), ValidationError>
+    ) -> Result<(), ValidationError>;
 }
 
 /// Trait representing an abstract branch in a product tree.
-pub trait BranchTrait {
-    /// The associated type representing child branches.
-    type BranchType: BranchTrait;
-
-    /// The associated type representing a full product name.
-    type FullProductNameType: FullProductNameTrait;
-
+pub trait BranchTrait<FPN: ProductTrait> : Sized {
     /// Returns an optional reference to the child branches of this branch.
-    fn get_branches(&self) -> Option<&Vec<Self::BranchType>>;
+    fn get_branches(&self) -> Option<&Vec<Self>>;
 
     /// Retrieves the full product name associated with this branch, if available.
-    fn get_product(&self) -> &Option<Self::FullProductNameType>;
+    fn get_product(&self) -> &Option<FPN>;
+
+    /// Recursively visits all branches in the tree structure,
+    /// applying the provided callback function to each branch.
+    ///
+    /// This method traverses the entire branch hierarchy, starting from the current branch and
+    /// proceeding depth-first through all child branches. For each branch, it calls the
+    /// provided callback function with the branch object and its path representation.
+    ///
+    /// # Parameters
+    /// * `path` - A string representing the current path in the branch hierarchy
+    /// * `callback` - A mutable function that takes a reference to Self and the
+    ///                current path string, and returns a Result
+    ///
+    /// # Returns
+    /// * `Ok(())` if the traversal completes successfully
+    /// * `Err(ValidationError)` if the callback returns an error for any branch
+    fn visit_branches_rec(&self, path: &str, callback: &mut impl FnMut(&Self, &str) -> Result<(), ValidationError>) -> Result<(), ValidationError> {
+        callback(self, &path)?;
+        if let Some(branches) = self.get_branches().as_ref() {
+            for (i, branch) in branches.iter().enumerate() {
+                branch.visit_branches_rec(&format!("{}/branches/{}", path, i), callback)?;
+            }
+        }
+        Ok(())
+    }
+
+    /// Searches for branches that exceed the maximum allowed depth in the branch hierarchy.
+    ///
+    /// This method recursively checks if the branch structure exceeds the specified depth limit.
+    /// It traverses the branch hierarchy depth-first, decrementing the remaining depth parameter
+    /// at each level. If branches are found beyond the allowed depth, it returns the path to the
+    /// first excessive branch.
+    ///
+    /// # Parameters
+    /// * `remaining_depth` - The maximum number of branch levels still allowed
+    ///
+    /// # Returns
+    /// * `Some(String)` containing the path to the first branch that exceeds the allowed depth
+    /// * `None` if no branches exceed the allowed depth
+    fn find_excessive_branch_depth(&self, remaining_depth: u32) -> Option<String> {
+        if let Some(branches) = self.get_branches() {
+            // If we've reached depth limit and there are branches, we've found a violation
+            if remaining_depth == 1 {
+                return Some("/branches/0".to_string());
+            }
+            for (i, branch) in branches.iter().enumerate() {
+                if let Some(sub_path) = branch.find_excessive_branch_depth(remaining_depth - 1) {
+                    return Some(format!("/branches/{}{}", i, sub_path));
+                }
+            }
+        }
+        None
+    }
 }
 
 /// Trait representing an abstract product group in a CSAF document.
@@ -335,10 +503,7 @@ pub trait ProductGroupTrait {
 }
 
 /// Trait representing an abstract relationship in a product tree.
-pub trait RelationshipTrait {
-    /// The associated type representing a full product name.
-    type FullProductNameType: FullProductNameTrait;
-
+pub trait RelationshipTrait<FPN: ProductTrait> {
     /// Retrieves the product reference identifier.
     fn get_product_reference(&self) -> &String;
 
@@ -346,11 +511,27 @@ pub trait RelationshipTrait {
     fn get_relates_to_product_reference(&self) -> &String;
 
     /// Retrieves the full product name associated with the relationship.
-    fn get_full_product_name(&self) -> &Self::FullProductNameType;
+    fn get_full_product_name(&self) -> &FPN;
 }
 
 /// Trait representing an abstract full product name in a CSAF document.
-pub trait FullProductNameTrait {
+pub trait ProductTrait {
+    /// The associated type representing a product identification helper.
+    type ProductIdentificationHelperType: ProductIdentificationHelperTrait;
+
     /// Returns the product ID from the full product name.
     fn get_product_id(&self) -> &String;
+
+    /// Returns the product identification helper associated with the full product name.
+    fn get_product_identification_helper(&self) -> &Option<Self::ProductIdentificationHelperType>;
+}
+
+/// Trait representing an abstract product identification helper of a full product name.
+pub trait ProductIdentificationHelperTrait {
+    /// Returns the PURLs identifying the associated product.
+    fn get_purls(&self) -> Option<&[String]>;
+
+    fn get_model_numbers(&self) -> Option<impl Iterator<Item = &String> + '_>;
+
+    fn get_serial_numbers(&self) -> Option<impl Iterator<Item = &String> + '_>;
 }
