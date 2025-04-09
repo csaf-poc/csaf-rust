@@ -120,7 +120,7 @@ impl VulnerabilityTrait for Vulnerability {
         &self.threats
     }
 
-    fn get_release_date(&self) -> &Option<String> {
+    fn get_disclosure_date(&self) -> &Option<String> {
         &self.release_date
     }
 

@@ -157,7 +157,7 @@ pub trait VulnerabilityTrait {
     fn get_threats(&self) -> &Vec<Self::ThreatType>;
 
     /// Returns the date when this vulnerability was initially disclosed
-    fn get_release_date(&self) -> &Option<String>;
+    fn get_disclosure_date(&self) -> &Option<String>;
 
     /// Returns the date when this vulnerability was initially discovered
     fn get_discovery_date(&self) -> &Option<String>;
