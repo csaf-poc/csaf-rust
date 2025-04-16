@@ -1,15 +1,11 @@
 use crate::csaf::getter_traits::{CsafTrait, DocumentTrait, FlagTrait, GeneratorTrait, InvolvementTrait, RemediationTrait, RevisionTrait, ThreatTrait, TrackingTrait, VulnerabilityTrait};
 use crate::csaf::validation::ValidationError;
 use regex::Regex;
-use std::sync::OnceLock;
+use std::sync::LazyLock;
 
-static RFC3339_REGEX: OnceLock<Regex> = OnceLock::new();
-
-fn get_rfc3339_regex() -> &'static Regex {
-    RFC3339_REGEX.get_or_init(||
-        Regex::new(r"^((\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?)(Z|[+-]\d{2}:\d{2}))$").unwrap()
-    )
-}
+static CSAF_RFC3339_REGEX: LazyLock<Regex> = LazyLock::new(||
+    Regex::new(r"^((\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?)(Z|[+-]\d{2}:\d{2}))$").unwrap()
+);
 
 /// Validates that all date/time fields in the CSAF document conform to the required format
 /// (ISO 8601 format with time zone or UTC).
@@ -45,8 +41,8 @@ pub fn test_6_1_37_date_and_time(
     // Check vulnerability related dates
     for (i_v, vuln) in doc.get_vulnerabilities().iter().enumerate() {
         // Check disclosure date if present
-        if let Some(date) = vuln.get_release_date() {
-            check_datetime(date, &format!("/vulnerabilities/{}/release_date", i_v))?;
+        if let Some(date) = vuln.get_disclosure_date() {
+            check_datetime(date, &format!("/vulnerabilities/{}/disclosure_date", i_v))?;
         }
 
         // Check discovery date if present
@@ -94,7 +90,7 @@ pub fn test_6_1_37_date_and_time(
 }
 
 fn check_datetime(date_time: &String, instance_path: &str) -> Result<(), ValidationError> {
-    if get_rfc3339_regex().is_match(date_time) {
+    if CSAF_RFC3339_REGEX.is_match(date_time) {
         // Add chrono-based plausibility check
         match chrono::DateTime::parse_from_rfc3339(date_time) {
             Ok(_) => Ok(()), // Successfully parsed as a valid RFC3339 datetime
@@ -136,12 +132,12 @@ mod tests {
                     instance_path: "/vulnerabilities/0/discovery_date".to_string(),
                 }),
                 ("04", &ValidationError {
-                    message: "Date-time string 2023-02-30T00:00:00+01:00 matched RFC3339 regex but failed chrono parsing: input is out of range".to_string(),
-                    instance_path: "/vulnerabilities/0/discovery_date".to_string(),
+                    message: "Date-time string 2023-04-31T00:00:00+01:00 matched RFC3339 regex but failed chrono parsing: input is out of range".to_string(),
+                    instance_path: "/vulnerabilities/0/disclosure_date".to_string(),
                 }),
                 ("05", &ValidationError {
-                    message: "Date-time string 1900-02-29T00:00:00+01:00 matched RFC3339 regex but failed chrono parsing: input is out of range".to_string(),
-                    instance_path: "/vulnerabilities/0/discovery_date".to_string(),
+                    message: "Date-time string 2023-02-29T00:00:00+01:00 matched RFC3339 regex but failed chrono parsing: input is out of range".to_string(),
+                    instance_path: "/vulnerabilities/0/disclosure_date".to_string(),
                 }),
             ])
         );

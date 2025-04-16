@@ -2,3 +2,7 @@
 	path = csaf
 	url = https://github.com/oasis-tcs/csaf
 	branch = master
+[submodule "ssvc"]
+	path = ssvc
+	url = https://github.com/CERTCC/SSVC.git
+	branch = main

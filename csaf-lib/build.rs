@@ -21,21 +21,35 @@ fn main() -> Result<(), BuildError> {
     build(
         "./src/csaf/csaf2_0/csaf_json_schema.json",
         "csaf/csaf2_0/schema.rs",
+        true,
+    )?;
+    build(
+        "./src/csaf/csaf2_1/ssvc-1-0-1-merged.schema.json",
+        "csaf/csaf2_1/ssvc_schema.rs",
+        false,
     )?;
     build(
         "./src/csaf/csaf2_1/csaf_json_schema.json",
         "csaf/csaf2_1/schema.rs",
+        true,
+    )?;
+    build(
+        "../ssvc/data/schema/v1/Decision_Point-1-0-1.schema.json",
+        "csaf/csaf2_1/ssvc_dp_schema.rs",
+        false,
     )?;
 
     Ok(())
 }
 
-fn build(input: &str, output: &str) -> Result<(), BuildError> {
+fn build(input: &str, output: &str, no_date_time: bool) -> Result<(), BuildError> {
     let content = fs::read_to_string(input)?;
     let mut schema_value = serde_json::from_str(&content)?;
-    // Recursively search for "format": "date-time" and replace with something else
-    remove_datetime_formats(&mut schema_value);
-    let schema = serde_json::from_value::<schemars::schema::RootSchema>(schema_value)?;
+    if no_date_time {
+        // Recursively search for "format": "date-time" and remove this format
+        remove_datetime_formats(&mut schema_value);
+    }
+    let schema: schemars::schema::RootSchema = serde_json::from_value(schema_value)?;
 
     let mut type_space = TypeSpace::new(TypeSpaceSettings::default().with_struct_builder(true));
     type_space.add_root_schema(schema)?;

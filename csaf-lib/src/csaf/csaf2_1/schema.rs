@@ -1896,7 +1896,7 @@ impl<'de> ::serde::Deserialize<'de> for CommonPlatformEnumerationRepresentation 
 ///            },
 ///            "initial_release_date": {
 ///              "title": "Initial release date",
-///              "description": "The date when this document was first published.",
+///              "description": "The date when this document was first released to the specified target group.",
 ///              "type": "string"
 ///            },
 ///            "revision_history": {
@@ -2137,6 +2137,11 @@ impl<'de> ::serde::Deserialize<'de> for CommonPlatformEnumerationRepresentation 
 ///            "minItems": 1,
 ///            "uniqueItems": true
 ///          },
+///          "disclosure_date": {
+///            "title": "Disclosure date",
+///            "description": "Holds the date and time the vulnerability was originally disclosed to the public.",
+///            "type": "string"
+///          },
 ///          "discovery_date": {
 ///            "title": "Discovery date",
 ///            "description": "Holds the date and time the vulnerability was originally discovered.",
@@ -2301,6 +2306,9 @@ impl<'de> ::serde::Deserialize<'de> for CommonPlatformEnumerationRepresentation 
 ///                    },
 ///                    "cvss_v4": {
 ///                      "type": "object"
+///                    },
+///                    "ssvc_v1": {
+///                      "type": "object"
 ///                    }
 ///                  }
 ///                },
@@ -2375,11 +2383,6 @@ impl<'de> ::serde::Deserialize<'de> for CommonPlatformEnumerationRepresentation 
 ///            "title": "Vulnerability references",
 ///            "description": "Holds a list of references associated with this vulnerability item.",
 ///            "$ref": "#/$defs/references_t"
-///          },
-///          "release_date": {
-///            "title": "Release date",
-///            "description": "Holds the date and time the vulnerability was originally released into the wild.",
-///            "type": "string"
 ///          },
 ///          "remediations": {
 ///            "title": "List of remediations",
@@ -2661,6 +2664,9 @@ impl<'de> ::serde::Deserialize<'de> for ContactDetails {
 ///    },
 ///    "cvss_v4": {
 ///      "type": "object"
+///    },
+///    "ssvc_v1": {
+///      "type": "object"
 ///    }
 ///  }
 ///}
@@ -2674,6 +2680,8 @@ pub struct Content {
     pub cvss_v3: ::serde_json::Map<::std::string::String, ::serde_json::Value>,
     #[serde(default, skip_serializing_if = "::serde_json::Map::is_empty")]
     pub cvss_v4: ::serde_json::Map<::std::string::String, ::serde_json::Value>,
+    #[serde(default, skip_serializing_if = "::serde_json::Map::is_empty")]
+    pub ssvc_v1: ::serde_json::Map<::std::string::String, ::serde_json::Value>,
 }
 impl ::std::convert::From<&Content> for Content {
     fn from(value: &Content) -> Self {
@@ -2686,6 +2694,7 @@ impl ::std::default::Default for Content {
             cvss_v2: Default::default(),
             cvss_v3: Default::default(),
             cvss_v4: Default::default(),
+            ssvc_v1: Default::default(),
         }
     }
 }
@@ -3863,7 +3872,7 @@ impl DocumentGenerator {
 ///        },
 ///        "initial_release_date": {
 ///          "title": "Initial release date",
-///          "description": "The date when this document was first published.",
+///          "description": "The date when this document was first released to the specified target group.",
 ///          "type": "string"
 ///        },
 ///        "revision_history": {
@@ -5787,6 +5796,9 @@ impl<'de> ::serde::Deserialize<'de> for LegacyVersionOfTheRevision {
 ///          "type": "object"
 ///        },
 ///        "cvss_v4": {
+///          "type": "object"
+///        },
+///        "ssvc_v1": {
 ///          "type": "object"
 ///        }
 ///      }
@@ -9659,7 +9671,7 @@ impl<'de> ::serde::Deserialize<'de> for TitleOfThisDocument {
 ///    },
 ///    "initial_release_date": {
 ///      "title": "Initial release date",
-///      "description": "The date when this document was first published.",
+///      "description": "The date when this document was first released to the specified target group.",
 ///      "type": "string"
 ///    },
 ///    "revision_history": {
@@ -9731,7 +9743,7 @@ pub struct Tracking {
     pub generator: ::std::option::Option<DocumentGenerator>,
     ///The ID is a simple label that provides for a wide range of numbering values, types, and schemes. Its value SHOULD be assigned and maintained by the original document issuing authority.
     pub id: UniqueIdentifierForTheDocument,
-    ///The date when this document was first published.
+    ///The date when this document was first released to the specified target group.
     pub initial_release_date: ::std::string::String,
     ///Holds one revision item for each version of the CSAF document, including the initial one.
     pub revision_history: ::std::vec::Vec<Revision>,
@@ -10157,6 +10169,11 @@ impl<'de> ::serde::Deserialize<'de> for VersionT {
 ///      "minItems": 1,
 ///      "uniqueItems": true
 ///    },
+///    "disclosure_date": {
+///      "title": "Disclosure date",
+///      "description": "Holds the date and time the vulnerability was originally disclosed to the public.",
+///      "type": "string"
+///    },
 ///    "discovery_date": {
 ///      "title": "Discovery date",
 ///      "description": "Holds the date and time the vulnerability was originally discovered.",
@@ -10321,6 +10338,9 @@ impl<'de> ::serde::Deserialize<'de> for VersionT {
 ///              },
 ///              "cvss_v4": {
 ///                "type": "object"
+///              },
+///              "ssvc_v1": {
+///                "type": "object"
 ///              }
 ///            }
 ///          },
@@ -10395,11 +10415,6 @@ impl<'de> ::serde::Deserialize<'de> for VersionT {
 ///      "title": "Vulnerability references",
 ///      "description": "Holds a list of references associated with this vulnerability item.",
 ///      "$ref": "#/$defs/references_t"
-///    },
-///    "release_date": {
-///      "title": "Release date",
-///      "description": "Holds the date and time the vulnerability was originally released into the wild.",
-///      "type": "string"
 ///    },
 ///    "remediations": {
 ///      "title": "List of remediations",
@@ -10564,6 +10579,9 @@ pub struct Vulnerability {
     ///Contains a list of CWEs.
     #[serde(default, skip_serializing_if = "::std::option::Option::is_none")]
     pub cwes: ::std::option::Option<Vec<Cwe>>,
+    ///Holds the date and time the vulnerability was originally disclosed to the public.
+    #[serde(default, skip_serializing_if = "::std::option::Option::is_none")]
+    pub disclosure_date: ::std::option::Option<::std::string::String>,
     ///Holds the date and time the vulnerability was originally discovered.
     #[serde(default, skip_serializing_if = "::std::option::Option::is_none")]
     pub discovery_date: ::std::option::Option<::std::string::String>,
@@ -10587,9 +10605,6 @@ pub struct Vulnerability {
     ///Holds a list of references associated with this vulnerability item.
     #[serde(default, skip_serializing_if = "::std::option::Option::is_none")]
     pub references: ::std::option::Option<ReferencesT>,
-    ///Holds the date and time the vulnerability was originally released into the wild.
-    #[serde(default, skip_serializing_if = "::std::option::Option::is_none")]
-    pub release_date: ::std::option::Option<::std::string::String>,
     ///Contains a list of remediations.
     #[serde(default, skip_serializing_if = "::std::vec::Vec::is_empty")]
     pub remediations: ::std::vec::Vec<Remediation>,
@@ -10611,6 +10626,7 @@ impl ::std::default::Default for Vulnerability {
             acknowledgments: Default::default(),
             cve: Default::default(),
             cwes: Default::default(),
+            disclosure_date: Default::default(),
             discovery_date: Default::default(),
             flags: Default::default(),
             ids: Default::default(),
@@ -10619,7 +10635,6 @@ impl ::std::default::Default for Vulnerability {
             notes: Default::default(),
             product_status: Default::default(),
             references: Default::default(),
-            release_date: Default::default(),
             remediations: Default::default(),
             threats: Default::default(),
             title: Default::default(),
@@ -11179,6 +11194,10 @@ pub mod builder {
             ::serde_json::Map<::std::string::String, ::serde_json::Value>,
             ::std::string::String,
         >,
+        ssvc_v1: ::std::result::Result<
+            ::serde_json::Map<::std::string::String, ::serde_json::Value>,
+            ::std::string::String,
+        >,
     }
     impl ::std::default::Default for Content {
         fn default() -> Self {
@@ -11186,6 +11205,7 @@ pub mod builder {
                 cvss_v2: Ok(Default::default()),
                 cvss_v3: Ok(Default::default()),
                 cvss_v4: Ok(Default::default()),
+                ssvc_v1: Ok(Default::default()),
             }
         }
     }
@@ -11232,6 +11252,20 @@ pub mod builder {
                 });
             self
         }
+        pub fn ssvc_v1<T>(mut self, value: T) -> Self
+        where
+            T: ::std::convert::TryInto<
+                ::serde_json::Map<::std::string::String, ::serde_json::Value>,
+            >,
+            T::Error: ::std::fmt::Display,
+        {
+            self.ssvc_v1 = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for ssvc_v1: {}", e)
+                });
+            self
+        }
     }
     impl ::std::convert::TryFrom<Content> for super::Content {
         type Error = super::error::ConversionError;
@@ -11242,6 +11276,7 @@ pub mod builder {
                 cvss_v2: value.cvss_v2?,
                 cvss_v3: value.cvss_v3?,
                 cvss_v4: value.cvss_v4?,
+                ssvc_v1: value.ssvc_v1?,
             })
         }
     }
@@ -11251,6 +11286,7 @@ pub mod builder {
                 cvss_v2: Ok(value.cvss_v2),
                 cvss_v3: Ok(value.cvss_v3),
                 cvss_v4: Ok(value.cvss_v4),
+                ssvc_v1: Ok(value.ssvc_v1),
             }
         }
     }
@@ -14076,6 +14112,10 @@ pub mod builder {
             ::std::option::Option<Vec<super::Cwe>>,
             ::std::string::String,
         >,
+        disclosure_date: ::std::result::Result<
+            ::std::option::Option<::std::string::String>,
+            ::std::string::String,
+        >,
         discovery_date: ::std::result::Result<
             ::std::option::Option<::std::string::String>,
             ::std::string::String,
@@ -14108,10 +14148,6 @@ pub mod builder {
             ::std::option::Option<super::ReferencesT>,
             ::std::string::String,
         >,
-        release_date: ::std::result::Result<
-            ::std::option::Option<::std::string::String>,
-            ::std::string::String,
-        >,
         remediations: ::std::result::Result<
             ::std::vec::Vec<super::Remediation>,
             ::std::string::String,
@@ -14131,6 +14167,7 @@ pub mod builder {
                 acknowledgments: Ok(Default::default()),
                 cve: Ok(Default::default()),
                 cwes: Ok(Default::default()),
+                disclosure_date: Ok(Default::default()),
                 discovery_date: Ok(Default::default()),
                 flags: Ok(Default::default()),
                 ids: Ok(Default::default()),
@@ -14139,7 +14176,6 @@ pub mod builder {
                 notes: Ok(Default::default()),
                 product_status: Ok(Default::default()),
                 references: Ok(Default::default()),
-                release_date: Ok(Default::default()),
                 remediations: Ok(Default::default()),
                 threats: Ok(Default::default()),
                 title: Ok(Default::default()),
@@ -14177,6 +14213,18 @@ pub mod builder {
             self.cwes = value
                 .try_into()
                 .map_err(|e| format!("error converting supplied value for cwes: {}", e));
+            self
+        }
+        pub fn disclosure_date<T>(mut self, value: T) -> Self
+        where
+            T: ::std::convert::TryInto<::std::option::Option<::std::string::String>>,
+            T::Error: ::std::fmt::Display,
+        {
+            self.disclosure_date = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for disclosure_date: {}", e)
+                });
             self
         }
         pub fn discovery_date<T>(mut self, value: T) -> Self
@@ -14273,18 +14321,6 @@ pub mod builder {
                 });
             self
         }
-        pub fn release_date<T>(mut self, value: T) -> Self
-        where
-            T: ::std::convert::TryInto<::std::option::Option<::std::string::String>>,
-            T::Error: ::std::fmt::Display,
-        {
-            self.release_date = value
-                .try_into()
-                .map_err(|e| {
-                    format!("error converting supplied value for release_date: {}", e)
-                });
-            self
-        }
         pub fn remediations<T>(mut self, value: T) -> Self
         where
             T: ::std::convert::TryInto<::std::vec::Vec<super::Remediation>>,
@@ -14331,6 +14367,7 @@ pub mod builder {
                 acknowledgments: value.acknowledgments?,
                 cve: value.cve?,
                 cwes: value.cwes?,
+                disclosure_date: value.disclosure_date?,
                 discovery_date: value.discovery_date?,
                 flags: value.flags?,
                 ids: value.ids?,
@@ -14339,7 +14376,6 @@ pub mod builder {
                 notes: value.notes?,
                 product_status: value.product_status?,
                 references: value.references?,
-                release_date: value.release_date?,
                 remediations: value.remediations?,
                 threats: value.threats?,
                 title: value.title?,
@@ -14352,6 +14388,7 @@ pub mod builder {
                 acknowledgments: Ok(value.acknowledgments),
                 cve: Ok(value.cve),
                 cwes: Ok(value.cwes),
+                disclosure_date: Ok(value.disclosure_date),
                 discovery_date: Ok(value.discovery_date),
                 flags: Ok(value.flags),
                 ids: Ok(value.ids),
@@ -14360,7 +14397,6 @@ pub mod builder {
                 notes: Ok(value.notes),
                 product_status: Ok(value.product_status),
                 references: Ok(value.references),
-                release_date: Ok(value.release_date),
                 remediations: Ok(value.remediations),
                 threats: Ok(value.threats),
                 title: Ok(value.title),
