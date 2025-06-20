@@ -107,8 +107,8 @@ fn check_status_group<'a>(
                             message: format!(
                                 "Product {} is marked with product status group \"{}\" but has conflicting product status belonging to group \"{}\"",
                                 pid,
-                                status_group.to_string(),
-                                existing_status.to_string()
+                                status_group,
+                                *existing_status
                             ),
                             instance_path: format!("/vulnerabilities/{}/product_status/{}/{}", v_i, field_name, i_pid),
                         });

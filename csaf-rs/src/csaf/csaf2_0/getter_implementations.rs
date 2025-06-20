@@ -1,15 +1,32 @@
-use crate::csaf::csaf2_0::schema::{Branch, CategoryOfTheRemediation, CommonSecurityAdvisoryFramework, DocumentGenerator, DocumentLevelMetaData, DocumentStatus, Flag, FullProductNameT, HelperToIdentifyTheProduct, Id, Involvement, LabelOfTlp, Note, ProductGroup, ProductStatus, ProductTree, Relationship, Remediation, Revision, RulesForSharingDocument, Score, Threat, Tracking, TrafficLightProtocolTlp, Vulnerability};
-use crate::csaf::csaf2_1::schema::{CategoryOfTheRemediation as Remediation21, DocumentStatus as Status21, Epss, LabelOfTlp as Tlp21};
-use crate::csaf::getter_traits::{BranchTrait, CsafTrait, DistributionTrait, DocumentTrait, FlagTrait, ProductTrait, GeneratorTrait, InvolvementTrait, MetricTrait, ProductGroupTrait, ProductIdentificationHelperTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, RevisionTrait, SharingGroupTrait, ThreatTrait, TlpTrait, TrackingTrait, VulnerabilityTrait, ContentTrait, VulnerabilityIdTrait, NoteTrait, WithGroupIds};
-use std::ops::Deref;
+use crate::csaf::csaf2_0::schema::{
+    Branch, CategoryOfTheRemediation, CommonSecurityAdvisoryFramework, DocumentGenerator,
+    DocumentLevelMetaData, DocumentStatus, Flag, FullProductNameT, HelperToIdentifyTheProduct, Id,
+    Involvement, LabelOfTlp, Note, ProductGroup, ProductStatus, ProductTree, Relationship,
+    Remediation, Revision, RulesForSharingDocument, Score, Threat, Tracking,
+    TrafficLightProtocolTlp, Vulnerability,
+};
+use crate::csaf::csaf2_1::schema::{
+    CategoryOfTheRemediation as Remediation21, DocumentStatus as Status21, Epss,
+    LabelOfTlp as Tlp21,
+};
+use crate::csaf::csaf2_1::ssvc_schema::SsvcV1;
+use crate::csaf::getter_traits::{
+    BranchTrait, ContentTrait, CsafTrait, DistributionTrait, DocumentTrait, FlagTrait,
+    GeneratorTrait, InvolvementTrait, MetricTrait, NoteTrait, ProductGroupTrait,
+    ProductIdentificationHelperTrait, ProductStatusTrait, ProductTrait, ProductTreeTrait,
+    RelationshipTrait, RemediationTrait, RevisionTrait, SharingGroupTrait, ThreatTrait, TlpTrait,
+    TrackingTrait, VulnerabilityIdTrait, VulnerabilityTrait, WithGroupIds,
+};
+use crate::csaf::validation::ValidationError;
 use serde::de::Error;
 use serde_json::{Map, Value};
-use crate::csaf::csaf2_1::ssvc_schema::SsvcV1;
-use crate::csaf::validation::ValidationError;
+use std::ops::Deref;
 
 impl WithGroupIds for Remediation {
-    fn get_group_ids(&self) -> Option<impl Iterator<Item=&String> + '_> {
-        self.group_ids.as_ref().map(|g| (*g).iter().map(|x| x.deref()))
+    fn get_group_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
+        self.group_ids
+            .as_ref()
+            .map(|g| (*g).iter().map(|x| x.deref()))
     }
 }
 
@@ -35,7 +52,9 @@ impl RemediationTrait for Remediation {
     }
 
     fn get_product_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.product_ids.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.product_ids
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_date(&self) -> &Option<String> {
@@ -45,11 +64,15 @@ impl RemediationTrait for Remediation {
 
 impl ProductStatusTrait for ProductStatus {
     fn get_first_affected(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.first_affected.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.first_affected
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_first_fixed(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.first_fixed.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.first_fixed
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_fixed(&self) -> Option<impl Iterator<Item = &String> + '_> {
@@ -57,27 +80,37 @@ impl ProductStatusTrait for ProductStatus {
     }
 
     fn get_known_affected(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.known_affected.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.known_affected
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_known_not_affected(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.known_not_affected.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.known_not_affected
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_last_affected(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.last_affected.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.last_affected
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_recommended(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.recommended.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.recommended
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_under_investigation(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.under_investigation.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.under_investigation
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     /// Not specified for CSAF 2.0, so `None`
-    fn get_unknown(&self) -> Option<impl Iterator<Item=&String> + '_> {
+    fn get_unknown(&self) -> Option<impl Iterator<Item = &String> + '_> {
         None::<std::iter::Empty<&String>>
     }
 }
@@ -104,7 +137,9 @@ impl ContentTrait for Score {
     }
 
     fn get_ssvc_v1(&self) -> Result<SsvcV1, serde_json::Error> {
-        Err(serde_json::Error::custom("SSVC metrics are not implemented in CSAF 2.0"))
+        Err(serde_json::Error::custom(
+            "SSVC metrics are not implemented in CSAF 2.0",
+        ))
     }
 
     fn get_cvss_v2(&self) -> Option<&Map<String, Value>> {
@@ -141,13 +176,17 @@ impl ContentTrait for Score {
 
 impl WithGroupIds for Threat {
     fn get_group_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.group_ids.as_ref().map(|g| (*g).iter().map(|x| x.deref()))
+        self.group_ids
+            .as_ref()
+            .map(|g| (*g).iter().map(|x| x.deref()))
     }
 }
 
 impl ThreatTrait for Threat {
     fn get_product_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.product_ids.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.product_ids
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_date(&self) -> &Option<String> {
@@ -199,15 +238,15 @@ impl VulnerabilityTrait for Vulnerability {
     }
 
     fn get_cve(&self) -> Option<&String> {
-        self.cve.as_ref().map(|x| x.deref())
+        self.cve.as_deref()
     }
-    
+
     fn get_ids(&self) -> &Option<Vec<Self::VulnerabilityIdType>> {
         &self.ids
     }
 
     fn get_notes(&self) -> Option<&Vec<Self::NoteType>> {
-        self.notes.as_ref().map(|x| x.deref())
+        self.notes.as_deref()
     }
 }
 
@@ -222,8 +261,10 @@ impl VulnerabilityIdTrait for Id {
 }
 
 impl WithGroupIds for Flag {
-    fn get_group_ids(&self) -> Option<impl Iterator<Item=&String> + '_> {
-        self.group_ids.as_ref().map(|g| (*g).iter().map(|x| x.deref()))
+    fn get_group_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
+        self.group_ids
+            .as_ref()
+            .map(|g| (*g).iter().map(|x| x.deref()))
     }
 }
 
@@ -275,15 +316,16 @@ impl DocumentTrait for DocumentLevelMetaData {
     fn get_distribution_21(&self) -> Result<&Self::DistributionType, ValidationError> {
         match self.distribution.as_ref() {
             None => Err(ValidationError {
-                message: "CSAF 2.1 requires the distribution property, but it is not set.".to_string(),
-                instance_path: "/document/distribution".to_string()
+                message: "CSAF 2.1 requires the distribution property, but it is not set."
+                    .to_string(),
+                instance_path: "/document/distribution".to_string(),
             }),
-            Some(distribution) => Ok(distribution)
+            Some(distribution) => Ok(distribution),
         }
     }
 
     fn get_notes(&self) -> Option<&Vec<Self::NoteType>> {
-        self.notes.as_ref().map(|x| x.deref())
+        self.notes.as_deref()
     }
 }
 
@@ -305,15 +347,15 @@ impl DistributionTrait for RulesForSharingDocument {
         match self.tlp.as_ref() {
             None => Err(ValidationError {
                 message: "CSAF 2.1 requires the TLP property, but it is not set.".to_string(),
-                instance_path: "/document/distribution/sharing_group/tlp".to_string()
+                instance_path: "/document/distribution/sharing_group/tlp".to_string(),
             }),
-            Some(tlp) => Ok(tlp)
+            Some(tlp) => Ok(tlp),
         }
     }
 }
 
 impl WithGroupIds for Note {
-    fn get_group_ids(&self) -> Option<impl Iterator<Item=&String> + '_> {
+    fn get_group_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
         None::<std::iter::Empty<&String>>
     }
 }
@@ -408,7 +450,7 @@ impl ProductTreeTrait for ProductTree {
     type FullProductNameType = FullProductNameT;
 
     fn get_branches(&self) -> Option<&Vec<Self::BranchType>> {
-        self.branches.as_ref().map(|branches| branches.deref())
+        self.branches.as_deref()
     }
 
     fn get_product_groups(&self) -> &Vec<Self::ProductGroupType> {
@@ -423,14 +465,17 @@ impl ProductTreeTrait for ProductTree {
         &self.full_product_names
     }
 
-    fn visit_all_products(&self, callback: &mut impl FnMut(&Self::FullProductNameType, &str) -> Result<(), ValidationError>) -> Result<(), ValidationError> {
+    fn visit_all_products(
+        &self,
+        callback: &mut impl FnMut(&Self::FullProductNameType, &str) -> Result<(), ValidationError>,
+    ) -> Result<(), ValidationError> {
         self.visit_all_products_generic(callback)
     }
 }
 
 impl BranchTrait<FullProductNameT> for Branch {
     fn get_branches(&self) -> Option<&Vec<Self>> {
-        self.branches.as_ref().map(|branches| branches.deref())
+        self.branches.as_deref()
     }
 
     fn get_product(&self) -> &Option<FullProductNameT> {
@@ -476,14 +521,18 @@ impl ProductTrait for FullProductNameT {
 
 impl ProductIdentificationHelperTrait for HelperToIdentifyTheProduct {
     fn get_purls(&self) -> Option<&[String]> {
-        self.purl.as_ref().map(|purl| std::slice::from_ref(purl))
+        self.purl.as_ref().map(std::slice::from_ref)
     }
 
     fn get_model_numbers(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.model_numbers.as_ref().map(|v| v.iter().map(|x| x.deref()))
+        self.model_numbers
+            .as_ref()
+            .map(|v| v.iter().map(|x| x.deref()))
     }
 
     fn get_serial_numbers(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.serial_numbers.as_ref().map(|v| v.iter().map(|x| x.deref()))
+        self.serial_numbers
+            .as_ref()
+            .map(|v| v.iter().map(|x| x.deref()))
     }
 }

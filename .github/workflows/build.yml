@@ -9,7 +9,7 @@ on:
       - v*.**
   merge_group:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -44,6 +44,8 @@ jobs:
       - name: Publish dry-run
         run: cargo publish --dry-run -p csaf-rs --target=${{ matrix.target.arch }} --verbose
         if: ${{ matrix.target.skip-test != true }}
+      - name: Clippy
+        run: cargo clippy --target=${{ matrix.target.arch }} --tests --bins --all -- -D warnings
       - name: Archive csaf-validator (${{ matrix.target.arch }})
         uses: actions/upload-artifact@v4
         with:
