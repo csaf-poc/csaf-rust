@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, serde::Serialize)]
@@ -38,6 +39,16 @@ impl FromStr for ValidationPreset {
     }
 }
 
+impl Display for ValidationPreset {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Basic => write!(f, "basic"),
+            Self::Extended => write!(f, "extended"),
+            Self::Full => write!(f, "full"),
+        }
+    }
+}
+
 pub trait Validate {
     /// Validates this object according to a validation preset
     fn validate_preset(&'static self, preset: ValidationPreset);
@@ -46,8 +57,7 @@ pub trait Validate {
     fn validate_by_test(&self, version: &str);
 }
 
-pub type Test<VersionedDocument> =
-    fn(&VersionedDocument) -> Result<(), ValidationError>;
+pub type Test<VersionedDocument> = fn(&VersionedDocument) -> Result<(), ValidationError>;
 
 /// Represents something which is validatable according to the CSAF standard.
 /// This trait MUST be implemented by the struct that represents a CSAF document
