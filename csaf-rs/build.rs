@@ -58,7 +58,7 @@ fn main() -> Result<(), BuildError> {
 }
 
 fn build(input: &str, output: &str, no_date_time: bool) -> Result<(), BuildError> {
-    let content = fs::read_to_string(&input)?;
+    let content = fs::read_to_string(input)?;
     let mut schema_value = serde_json::from_str(&content)?;
     if no_date_time {
         // Recursively search for "format": "date-time" and remove this format
@@ -74,7 +74,15 @@ fn build(input: &str, output: &str, no_date_time: bool) -> Result<(), BuildError
     );
     type_space.add_root_schema(schema)?;
 
-    let content = prettyplease::unparse(&syn::parse2::<syn::File>(type_space.to_stream())?);
+    let mut content = prettyplease::unparse(&syn::parse2::<syn::File>(type_space.to_stream())?);
+    content.insert_str(
+        0,
+        r#"
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::derivable_impls)]
+#![allow(clippy::len_zero)]
+"#,
+    );
 
     let mut out_file = Path::new("src").to_path_buf();
     out_file.push(output);

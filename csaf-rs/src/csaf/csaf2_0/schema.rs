@@ -1,3 +1,7 @@
+
+#![allow(clippy::clone_on_copy)]
+#![allow(clippy::derivable_impls)]
+#![allow(clippy::len_zero)]
 /// Error types.
 pub mod error {
     /// Error from a TryFrom or FromStr implementation.

@@ -7,10 +7,7 @@ pub fn load_document(path: &str) -> std::io::Result<CommonSecurityAdvisoryFramew
     let f = File::open(path)?;
     let reader = BufReader::new(f);
     let doc: CommonSecurityAdvisoryFramework = serde_json::from_reader(reader)?;
-    println!(
-        "Successfully parsed document '{}'",
-        doc.document.title.to_string()
-    );
+    println!("Successfully parsed document '{}'", *doc.document.title);
 
     Ok(doc)
 }

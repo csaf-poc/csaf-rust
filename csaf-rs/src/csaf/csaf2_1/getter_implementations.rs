@@ -1,13 +1,27 @@
-use crate::csaf::csaf2_1::schema::{Branch, CategoryOfTheRemediation, CommonSecurityAdvisoryFramework, Content, DocumentGenerator, DocumentLevelMetaData, DocumentStatus, Epss, Flag, FullProductNameT, HelperToIdentifyTheProduct, Id, Involvement, LabelOfTlp, Metric, Note, ProductGroup, ProductStatus, ProductTree, Relationship, Remediation, Revision, RulesForSharingDocument, SharingGroup, Threat, Tracking, TrafficLightProtocolTlp, Vulnerability};
-use crate::csaf::getter_traits::{BranchTrait, CsafTrait, DistributionTrait, DocumentTrait, FlagTrait, ProductTrait, GeneratorTrait, InvolvementTrait, MetricTrait, ProductGroupTrait, ProductIdentificationHelperTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, RevisionTrait, SharingGroupTrait, ThreatTrait, TlpTrait, TrackingTrait, VulnerabilityTrait, ContentTrait, VulnerabilityIdTrait, NoteTrait, WithGroupIds};
-use std::ops::Deref;
-use serde_json::{Map, Value};
+use crate::csaf::csaf2_1::schema::{
+    Branch, CategoryOfTheRemediation, CommonSecurityAdvisoryFramework, Content, DocumentGenerator,
+    DocumentLevelMetaData, DocumentStatus, Epss, Flag, FullProductNameT,
+    HelperToIdentifyTheProduct, Id, Involvement, LabelOfTlp, Metric, Note, ProductGroup,
+    ProductStatus, ProductTree, Relationship, Remediation, Revision, RulesForSharingDocument,
+    SharingGroup, Threat, Tracking, TrafficLightProtocolTlp, Vulnerability,
+};
 use crate::csaf::csaf2_1::ssvc_schema::SsvcV1;
+use crate::csaf::getter_traits::{
+    BranchTrait, ContentTrait, CsafTrait, DistributionTrait, DocumentTrait, FlagTrait,
+    GeneratorTrait, InvolvementTrait, MetricTrait, NoteTrait, ProductGroupTrait,
+    ProductIdentificationHelperTrait, ProductStatusTrait, ProductTrait, ProductTreeTrait,
+    RelationshipTrait, RemediationTrait, RevisionTrait, SharingGroupTrait, ThreatTrait, TlpTrait,
+    TrackingTrait, VulnerabilityIdTrait, VulnerabilityTrait, WithGroupIds,
+};
 use crate::csaf::validation::ValidationError;
+use serde_json::{Map, Value};
+use std::ops::Deref;
 
 impl WithGroupIds for Remediation {
     fn get_group_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.group_ids.as_ref().map(|g| (*g).iter().map(|x| x.deref()))
+        self.group_ids
+            .as_ref()
+            .map(|g| (*g).iter().map(|x| x.deref()))
     }
 }
 
@@ -17,7 +31,9 @@ impl RemediationTrait for Remediation {
     }
 
     fn get_product_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.product_ids.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.product_ids
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_date(&self) -> &Option<String> {
@@ -27,11 +43,15 @@ impl RemediationTrait for Remediation {
 
 impl ProductStatusTrait for ProductStatus {
     fn get_first_affected(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.first_affected.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.first_affected
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_first_fixed(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.first_fixed.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.first_fixed
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_fixed(&self) -> Option<impl Iterator<Item = &String> + '_> {
@@ -39,27 +59,39 @@ impl ProductStatusTrait for ProductStatus {
     }
 
     fn get_known_affected(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.known_affected.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.known_affected
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_known_not_affected(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.known_not_affected.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.known_not_affected
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_last_affected(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.last_affected.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.last_affected
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_recommended(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.recommended.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.recommended
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_under_investigation(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.under_investigation.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.under_investigation
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
-    fn get_unknown(&self) -> Option<impl Iterator<Item=&String> + '_> {
-        self.unknown.as_ref().map(|p| (*p).iter().map(|x| x.deref()))   
+    fn get_unknown(&self) -> Option<impl Iterator<Item = &String> + '_> {
+        self.unknown
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 }
 
@@ -120,21 +152,24 @@ impl ContentTrait for Content {
     fn get_content_json_path(&self, vulnerability_idx: usize, metric_idx: usize) -> String {
         format!(
             "/vulnerabilities/{}/metrics/{}/content",
-            vulnerability_idx,
-            metric_idx,
+            vulnerability_idx, metric_idx,
         )
     }
 }
 
 impl WithGroupIds for Threat {
     fn get_group_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.group_ids.as_ref().map(|g| (*g).iter().map(|x| x.deref()))
+        self.group_ids
+            .as_ref()
+            .map(|g| (*g).iter().map(|x| x.deref()))
     }
 }
 
 impl ThreatTrait for Threat {
     fn get_product_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.product_ids.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+        self.product_ids
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 
     fn get_date(&self) -> &Option<String> {
@@ -185,7 +220,7 @@ impl VulnerabilityTrait for Vulnerability {
     }
 
     fn get_cve(&self) -> Option<&String> {
-        self.cve.as_ref().map(|x| x.deref())
+        self.cve.as_deref()
     }
 
     fn get_ids(&self) -> &Option<Vec<Self::VulnerabilityIdType>> {
@@ -193,7 +228,7 @@ impl VulnerabilityTrait for Vulnerability {
     }
 
     fn get_notes(&self) -> Option<&Vec<Self::NoteType>> {
-        self.notes.as_ref().map(|x| x.deref())
+        self.notes.as_deref()
     }
 }
 
@@ -208,8 +243,10 @@ impl VulnerabilityIdTrait for Id {
 }
 
 impl WithGroupIds for Flag {
-    fn get_group_ids(&self) -> Option<impl Iterator<Item=&String> + '_> {
-        self.group_ids.as_ref().map(|g| (*g).iter().map(|x| x.deref()))
+    fn get_group_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
+        self.group_ids
+            .as_ref()
+            .map(|g| (*g).iter().map(|x| x.deref()))
     }
 }
 
@@ -263,7 +300,7 @@ impl DocumentTrait for DocumentLevelMetaData {
     }
 
     fn get_notes(&self) -> Option<&Vec<Self::NoteType>> {
-        self.notes.as_ref().map(|x| x.deref())
+        self.notes.as_deref()
     }
 }
 
@@ -287,8 +324,10 @@ impl DistributionTrait for RulesForSharingDocument {
 }
 
 impl WithGroupIds for Note {
-    fn get_group_ids(&self) -> Option<impl Iterator<Item=&String> + '_> {
-        self.group_ids.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+    fn get_group_ids(&self) -> Option<impl Iterator<Item = &String> + '_> {
+        self.group_ids
+            .as_ref()
+            .map(|p| (*p).iter().map(|x| x.deref()))
     }
 }
 
@@ -300,7 +339,7 @@ impl SharingGroupTrait for SharingGroup {
     }
 
     fn get_name(&self) -> Option<&String> {
-        self.name.as_ref().map(|x| x.deref())
+        self.name.as_deref()
     }
 }
 
@@ -364,7 +403,7 @@ impl ProductTreeTrait for ProductTree {
     type FullProductNameType = FullProductNameT;
 
     fn get_branches(&self) -> Option<&Vec<Self::BranchType>> {
-        self.branches.as_ref().map(|branches| branches.deref())
+        self.branches.as_deref()
     }
 
     fn get_product_groups(&self) -> &Vec<Self::ProductGroupType> {
@@ -379,14 +418,17 @@ impl ProductTreeTrait for ProductTree {
         &self.full_product_names
     }
 
-    fn visit_all_products(&self, callback: &mut impl FnMut(&Self::FullProductNameType, &str) -> Result<(), ValidationError>) -> Result<(), ValidationError> {
+    fn visit_all_products(
+        &self,
+        callback: &mut impl FnMut(&Self::FullProductNameType, &str) -> Result<(), ValidationError>,
+    ) -> Result<(), ValidationError> {
         self.visit_all_products_generic(callback)
     }
 }
 
 impl BranchTrait<FullProductNameT> for Branch {
     fn get_branches(&self) -> Option<&Vec<Self>> {
-        self.branches.as_ref().map(|branches| branches.deref())
+        self.branches.as_deref()
     }
 
     fn get_product(&self) -> &Option<FullProductNameT> {
@@ -432,14 +474,18 @@ impl ProductTrait for FullProductNameT {
 
 impl ProductIdentificationHelperTrait for HelperToIdentifyTheProduct {
     fn get_purls(&self) -> Option<&[String]> {
-        self.purls.as_ref().map(|v| v.as_slice())
+        self.purls.as_deref()
     }
 
     fn get_model_numbers(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.model_numbers.as_ref().map(|v| v.iter().map(|x| x.deref()))
+        self.model_numbers
+            .as_ref()
+            .map(|v| v.iter().map(|x| x.deref()))
     }
 
     fn get_serial_numbers(&self) -> Option<impl Iterator<Item = &String> + '_> {
-        self.serial_numbers.as_ref().map(|v| v.iter().map(|x| x.deref()))
+        self.serial_numbers
+            .as_ref()
+            .map(|v| v.iter().map(|x| x.deref()))
     }
 }

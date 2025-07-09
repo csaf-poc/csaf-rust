@@ -1,3 +1,5 @@
+#![cfg(test)]
+
 use crate::csaf::csaf2_0::loader::load_document as load_document_20;
 use crate::csaf::csaf2_0::schema::CommonSecurityAdvisoryFramework as Csaf20;
 use crate::csaf::csaf2_1::loader::load_document as load_document_21;
@@ -12,7 +14,7 @@ use std::collections::HashMap;
 /// * `test_number` - The test number to run (e.g., "36" for 6.1.36 tests)
 /// * `test_function` - The test function to execute against each document
 /// * `negative_cases` - A slice of tuples containing (file_suffix, expected_validation_error)
-///                     for negative test cases (starting with "0")
+///   for negative test cases (starting with "0")
 ///
 /// This function assumes tests with filenames ending with numbers starting with "0"
 /// are negative tests, and those starting with "1" are positive tests.
@@ -26,41 +28,45 @@ fn run_csaf_tests<CsafType>(
     use glob::glob;
 
     // Load and test each file
-    for entry in glob(pattern).expect("Failed to parse glob pattern") {
-        if let Ok(path) = entry {
-            // Extract the file suffix (e.g., "01", "02", etc.)
-            let file_name = path.file_name().unwrap().to_string_lossy();
-            println!("{}", file_name);
-            let test_num = file_name
-                .strip_prefix(file_prefix)
-                .unwrap()
-                .strip_suffix(".json")
-                .unwrap();
+    for path in glob(pattern)
+        .expect("Failed to parse glob pattern")
+        .flatten()
+    {
+        // Extract the file suffix (e.g., "01", "02", etc.)
+        let file_name = path.file_name().unwrap().to_string_lossy();
+        println!("{}", file_name);
+        let test_num = file_name
+            .strip_prefix(file_prefix)
+            .unwrap()
+            .strip_suffix(".json")
+            .unwrap();
 
-            // Load the document
-            let doc = document_loader(path.to_string_lossy().as_ref()).unwrap();
+        // Load the document
+        let doc = document_loader(path.to_string_lossy().as_ref()).unwrap();
 
-            // Check if this is expected to be a negative or positive test case
-            if test_num.starts_with('0') {
-                // Negative test case - should fail with a specific error
-                let expected_error = expected_errors.get(test_num).expect(
-                    &format!("Missing expected error definition for negative test case {}", test_num)
-                );
-                assert_eq!(
-                    Err((*expected_error).clone()),
-                    test_function(&doc),
-                    "Negative test case {} should have failed with the expected error", test_num
-                );
-            } else if test_num.starts_with('1') {
-                // Positive test case - should succeed
-                assert_eq!(
-                    Ok(()),
-                    test_function(&doc),
-                    "Positive test case {} should have succeeded", test_num
-                );
-            } else {
-                panic!("Unexpected test case number format: {}", test_num);
-            }
+        // Check if this is expected to be a negative or positive test case
+        if test_num.starts_with('0') {
+            // Negative test case - should fail with a specific error
+            let expected_error = expected_errors.get(test_num).expect(&format!(
+                "Missing expected error definition for negative test case {}",
+                test_num
+            ));
+            assert_eq!(
+                Err((*expected_error).clone()),
+                test_function(&doc),
+                "Negative test case {} should have failed with the expected error",
+                test_num
+            );
+        } else if test_num.starts_with('1') {
+            // Positive test case - should succeed
+            assert_eq!(
+                Ok(()),
+                test_function(&doc),
+                "Positive test case {} should have succeeded",
+                test_num
+            );
+        } else {
+            panic!("Unexpected test case number format: {}", test_num);
         }
     }
 }
@@ -72,9 +78,18 @@ pub fn run_csaf20_tests(
 ) {
     // Find all test files matching the pattern
     let file_prefix = &format!("oasis_csaf_tc-csaf_2_0-2021-6-1-{}-", test_number);
-    let pattern = &format!("../csaf/csaf_2.0/test/validator/data/mandatory/{}*.json", file_prefix);
+    let pattern = &format!(
+        "../csaf/csaf_2.0/test/validator/data/mandatory/{}*.json",
+        file_prefix
+    );
 
-    run_csaf_tests(pattern, file_prefix, load_document_20, test_function, expected_errors);
+    run_csaf_tests(
+        pattern,
+        file_prefix,
+        load_document_20,
+        test_function,
+        expected_errors,
+    );
 }
 
 pub fn run_csaf21_tests(
@@ -84,7 +99,16 @@ pub fn run_csaf21_tests(
 ) {
     // Find all test files matching the pattern
     let file_prefix = &format!("oasis_csaf_tc-csaf_2_1-2024-6-1-{}-", test_number);
-    let pattern = &format!("../csaf/csaf_2.1/test/validator/data/mandatory/{}*.json", file_prefix);
+    let pattern = &format!(
+        "../csaf/csaf_2.1/test/validator/data/mandatory/{}*.json",
+        file_prefix
+    );
 
-    run_csaf_tests(pattern, file_prefix, load_document_21, test_function, expected_errors);
+    run_csaf_tests(
+        pattern,
+        file_prefix,
+        load_document_21,
+        test_function,
+        expected_errors,
+    );
 }

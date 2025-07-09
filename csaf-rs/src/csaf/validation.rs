@@ -100,7 +100,7 @@ pub fn validate_by_test<VersionedDocument>(
     test_id: &str,
 ) {
     if let Some(test_fn) = target.tests().get(test_id) {
-        let _ = match test_fn(target.doc()) {
+        match test_fn(target.doc()) {
             Ok(()) => println!("> Test Success"),
             Err(e) => println!("> Error: {}", e),
         };
