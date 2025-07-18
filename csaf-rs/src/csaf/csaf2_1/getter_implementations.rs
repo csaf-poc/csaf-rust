@@ -1,7 +1,8 @@
-use crate::csaf::csaf2_1::schema::{Branch, CategoryOfTheRemediation, CommonSecurityAdvisoryFramework, Content, DocumentGenerator, DocumentLevelMetaData, DocumentStatus, Epss, Flag, FullProductNameT, HelperToIdentifyTheProduct, Id, Involvement, LabelOfTlp, Metric, Note, ProductGroup, ProductStatus, ProductTree, Relationship, Remediation, Revision, RulesForSharingDocument, SharingGroup, Threat, Tracking, TrafficLightProtocolTlp, Vulnerability};
-use crate::csaf::getter_traits::{BranchTrait, CsafTrait, DistributionTrait, DocumentTrait, FlagTrait, ProductTrait, GeneratorTrait, InvolvementTrait, MetricTrait, ProductGroupTrait, ProductIdentificationHelperTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, RevisionTrait, SharingGroupTrait, ThreatTrait, TlpTrait, TrackingTrait, VulnerabilityTrait, ContentTrait, VulnerabilityIdTrait, NoteTrait, WithGroupIds};
+use crate::csaf::csaf2_1::schema::{Branch, CategoryOfTheRemediation, CommonSecurityAdvisoryFramework, Content, DocumentGenerator, DocumentLevelMetaData, DocumentStatus, Epss, FirstKnownExploitationDate, Flag, FullProductNameT, HelperToIdentifyTheProduct, Id, Involvement, LabelOfTlp, Metric, Note, ProductGroup, ProductStatus, ProductTree, Relationship, Remediation, Revision, RulesForSharingDocument, SharingGroup, Threat, Tracking, TrafficLightProtocolTlp, Vulnerability};
+use crate::csaf::getter_traits::{BranchTrait, CsafTrait, DistributionTrait, DocumentTrait, FlagTrait, ProductTrait, GeneratorTrait, InvolvementTrait, MetricTrait, ProductGroupTrait, ProductIdentificationHelperTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, RevisionTrait, SharingGroupTrait, ThreatTrait, TlpTrait, TrackingTrait, VulnerabilityTrait, ContentTrait, VulnerabilityIdTrait, NoteTrait, WithGroupIds, FirstKnownExploitationDatesTrait};
 use std::ops::Deref;
 use serde_json::{Map, Value};
+use uuid::Uuid;
 use crate::csaf::csaf2_1::ssvc_schema::SsvcV1;
 use crate::csaf::validation::ValidationError;
 
@@ -151,6 +152,7 @@ impl VulnerabilityTrait for Vulnerability {
     type InvolvementType = Involvement;
     type VulnerabilityIdType = Id;
     type NoteType = Note;
+    type FirstKnownExploitationDatesType = FirstKnownExploitationDate;
 
     fn get_remediations(&self) -> &Vec<Self::RemediationType> {
         &self.remediations
@@ -195,6 +197,10 @@ impl VulnerabilityTrait for Vulnerability {
     fn get_notes(&self) -> Option<&Vec<Self::NoteType>> {
         self.notes.as_ref().map(|x| x.deref())
     }
+
+    fn get_first_known_exploitation_dates(&self) -> Option<&Vec<Self::FirstKnownExploitationDatesType>> {
+        self.first_known_exploitation_dates.as_ref()
+    }
 }
 
 impl VulnerabilityIdTrait for Id {
@@ -215,6 +221,16 @@ impl WithGroupIds for Flag {
 
 impl FlagTrait for Flag {
     fn get_date(&self) -> &Option<String> {
+        &self.date
+    }
+
+    fn get_product_ids(&self) -> Option<impl Iterator<Item=&String> + '_> {
+        self.product_ids.as_ref().map(|p| (*p).iter().map(|x| x.deref()))
+    }
+}
+
+impl FirstKnownExploitationDatesTrait for FirstKnownExploitationDate {
+    fn get_date(&self) -> &String {
         &self.date
     }
 }
@@ -265,6 +281,14 @@ impl DocumentTrait for DocumentLevelMetaData {
     fn get_notes(&self) -> Option<&Vec<Self::NoteType>> {
         self.notes.as_ref().map(|x| x.deref())
     }
+
+    fn get_lang(&self) -> Option<&String> {
+        self.lang.as_ref().map(|x| x.deref())
+    }
+
+    fn get_source_lang(&self) -> Option<&String> {
+        self.source_lang.as_ref().map(|x| x.deref())
+    }
 }
 
 impl DistributionTrait for RulesForSharingDocument {
@@ -295,7 +319,7 @@ impl WithGroupIds for Note {
 impl NoteTrait for Note {}
 
 impl SharingGroupTrait for SharingGroup {
-    fn get_id(&self) -> &String {
+    fn get_id(&self) -> &Uuid {
         &self.id
     }
 

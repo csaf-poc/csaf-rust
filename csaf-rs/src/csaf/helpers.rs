@@ -1,10 +1,20 @@
+use crate::csaf::csaf2_1::ssvc_dp_schema::DecisionPoint;
 use crate::csaf::getter_traits::{CsafTrait, ProductGroupTrait, ProductTreeTrait};
+use rust_embed::RustEmbed;
 use std::collections::{BTreeSet, HashMap, HashSet};
-use std::fs;
 use std::ops::Deref;
 use std::sync::LazyLock;
-use glob::glob;
-use crate::csaf::csaf2_1::ssvc_dp_schema::DecisionPoint;
+use uuid::{uuid, Uuid};
+
+/// Special name for public sharing groups
+pub static SG_NAME_PUBLIC: &str = "Public";
+/// Special name for private sharing groups
+pub static SG_NAME_PRIVATE: &str = "No sharing allowed";
+
+/// Special "max" UUID value
+pub static MAX_UUID: &Uuid = &uuid!("ffffffff-ffff-ffff-ffff-ffffffffffff");
+/// Special "nil" UUID value
+pub static NIL_UUID: &Uuid = &uuid!("00000000-0000-0000-0000-000000000000");
 
 pub fn resolve_product_groups<'a, I>(doc: &impl CsafTrait, product_groups: I) -> Option<BTreeSet<String>>
 where
@@ -47,41 +57,32 @@ pub fn count_unescaped_stars(s: &str) -> u32 {
     count
 }
 
-/// Recursively loads all decision point JSON descriptions from ../ssvc/data/json/decision_points.
+#[derive(RustEmbed)]
+#[folder = "assets/ssvc_decision_points/"]
+#[include = "*.json"]
+struct SsvcDecisionPointJsonFiles;
+
+/// Recursively loads all decision point JSON descriptions from `../ssvc/data/json/decision_points`.
 /// Entries are stored in a `HashMap` indexed by their respective (name, version) tuple for lookup.
 pub static SSVC_DECISION_POINTS: LazyLock<HashMap<(String, String, String), DecisionPoint>> = LazyLock::new(|| {
     let mut decision_points = HashMap::new();
 
-    // Use glob to find all JSON files that might contain decision point data
-    match glob("../ssvc/data/json/decision_points/**/*.json") {
-        Ok(paths) => {
-            for path_res in paths {
-                match path_res {
-                    Ok(path) => {
-                        match fs::read_to_string(&path) {
-                            Ok(content) => {
-                                match serde_json::from_str::<DecisionPoint>(&content) {
-                                    Ok(dp) => {
-                                        println!("Loaded SSVC decision point '{}' (version {})", dp.name.deref(), dp.version.deref());
-                                        // Insert using (name, key) tuple as the key
-                                        let key = (
-                                            dp.namespace.deref().to_owned(),
-                                            dp.name.deref().to_owned(),
-                                            dp.version.deref().to_owned(),
-                                        );
-                                        decision_points.insert(key, dp);
-                                    },
-                                    Err(err) => eprintln!("Warning: Failed to parse decision point from file {:?}: {}", path, err),
-                                }
-                            },
-                            Err(err) => eprintln!("Warning: Failed to read file {:?}: {}", path, err),
-                        }
-                    },
-                    Err(ref err) => eprintln!("Warning: Failed to read glob result {:?}: {}", path_res, err),
-                }
+    for filename in SsvcDecisionPointJsonFiles::iter() {
+        if let Some(file) = SsvcDecisionPointJsonFiles::get(&filename) {
+            let content = std::str::from_utf8(&file.data).unwrap();
+            match serde_json::from_str::<DecisionPoint>(content) {
+                Ok(dp) => {
+                    println!("Loaded SSVC decision point '{}' (version {})", dp.name.deref(), dp.version.deref());
+                    let key = (
+                        dp.namespace.deref().to_owned(),
+                        dp.name.deref().to_owned(),
+                        dp.version.deref().to_owned(),
+                    );
+                    decision_points.insert(key, dp);
+                },
+                Err(err) => eprintln!("Warning: Failed to parse decision point from file {}: {}", filename, err),
             }
-        },
-        Err(err) => eprintln!("Warning: Failed to search for decision point files: {}", err),
+        }
     }
 
     decision_points

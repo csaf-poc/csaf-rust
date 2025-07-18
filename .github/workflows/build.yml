@@ -36,6 +36,8 @@ jobs:
           submodules: 'true'
       - name: Prepare target
         run: rustup target add ${{ matrix.target.arch }}
+      - name: Update assets
+        run: ./update_assets.sh
       - name: Build
         run: cargo build --target=${{ matrix.target.arch }} --release --verbose
       - name: Run tests

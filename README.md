@@ -13,6 +13,9 @@ If you want to build `csaf-validator` on your own, please install Rust (see http
 git submodule init
 git submodule update --remote
 
+# make sure that local assets are in sync with git submodules
+./update_assets.sh
+
 # run the tests
 cargo test
 
@@ -20,7 +23,7 @@ cargo test
 cargo build --release
 ```
 
-The final binary will be in `target/release` and can then installed for example in a system-wide folder.
+The final binary will be in `target/release` and can then be installed, for example, in a system-wide folder.
 
 ## Usage
 

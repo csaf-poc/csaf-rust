@@ -1,4 +1,4 @@
-use crate::csaf::getter_traits::{CsafTrait, MetricTrait, ProductGroupTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, ThreatTrait, VulnerabilityTrait};
+use crate::csaf::getter_traits::{CsafTrait, FlagTrait, MetricTrait, ProductGroupTrait, ProductStatusTrait, ProductTreeTrait, RelationshipTrait, RemediationTrait, ThreatTrait, VulnerabilityTrait};
 
 pub fn gather_product_references(doc: &impl CsafTrait) -> Vec<(String, String)> {
     let mut ids = Vec::<(String, String)>::new();
@@ -93,6 +93,17 @@ pub fn gather_product_references(doc: &impl CsafTrait) -> Vec<(String, String)> 
             if let Some(product_ids) = threat.get_product_ids() {
                 for (x_i, x) in product_ids.enumerate() {
                     ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/threats/{}/product_ids/{}", v_i, threat_i, x_i)));
+                }
+            }
+        }
+
+        // /vulnerabilities[]/flags[]/product_ids[]
+        if let Some(flags) = v.get_flags().as_ref() {
+            for (flag_i, flag) in flags.iter().enumerate() {
+                if let Some(product_ids) = flag.get_product_ids() {
+                    for (x_i, x) in product_ids.enumerate() {
+                        ids.push(((*x).to_owned(), format!("/vulnerabilities/{}/flags/{}/product_ids/{}", v_i, flag_i, x_i)));
+                    }
                 }
             }
         }

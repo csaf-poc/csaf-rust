@@ -1,8 +1,7 @@
 use crate::csaf::csaf2_1::schema::LabelOfTlp::Clear;
 use crate::csaf::getter_traits::{CsafTrait, DistributionTrait, DocumentTrait, SharingGroupTrait, TlpTrait};
+use crate::csaf::helpers::MAX_UUID;
 use crate::csaf::validation::ValidationError;
-
-static MAX_UUID: &str = "ffffffff-ffff-ffff-ffff-ffffffffffff";
 
 /// Validates that a CSAF document using the maximum UUID as the sharing group ID
 /// has the TLP (Traffic Light Protocol) label set to `CLEAR`.

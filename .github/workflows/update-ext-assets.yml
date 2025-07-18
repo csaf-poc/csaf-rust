@@ -1,0 +1,22 @@
+name: Make PR for external assets update
+
+on:
+  schedule:
+    - cron: "15 3 * * 6"
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update external assets
+        run: ./update_ext_assets.sh
+
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: 'Update external assets'
+          branch: 'update-external-assets'
+          delete-branch: true

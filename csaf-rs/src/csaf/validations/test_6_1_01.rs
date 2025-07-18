@@ -13,7 +13,7 @@ pub fn test_6_1_01_missing_definition_of_product_id(
             Ok(())
         });
     }
-    
+
     let references = gather_product_references(doc);
     for (ref_id, ref_path) in references.iter() {
         if !definitions_set.contains(ref_id) {
@@ -35,13 +35,18 @@ mod tests {
     use crate::csaf::validations::test_6_1_01::test_6_1_01_missing_definition_of_product_id;
 
     #[test]
-    fn test_6_1_01() {
+    fn test_test_6_1_01() {
         let error01 = ValidationError {
             message: "Missing definition of product_id: CSAFPID-9080700".to_string(),
             instance_path: "/product_tree/product_groups/0/product_ids/0".to_string(),
         };
+        let error02 = ValidationError {
+            message: "Missing definition of product_id: CSAFPID-9080701".to_string(),
+            instance_path: "/vulnerabilities/0/flags/0/product_ids/1".to_string(),
+        };
         let errors = &HashMap::from([
-            ("01", &error01)
+            ("01", &error01),
+            ("02", &error02),
         ]);
         run_csaf20_tests("01", test_6_1_01_missing_definition_of_product_id, &errors);
         run_csaf21_tests("01", test_6_1_01_missing_definition_of_product_id, &errors);

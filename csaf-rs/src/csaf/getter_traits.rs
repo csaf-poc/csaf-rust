@@ -1,4 +1,5 @@
 use std::collections::{BTreeSet, HashSet};
+use uuid::Uuid;
 use crate::csaf::csaf2_1::schema::{CategoryOfTheRemediation, DocumentStatus, Epss, LabelOfTlp};
 use crate::csaf::csaf2_1::ssvc_schema::SsvcV1;
 use crate::csaf::helpers::resolve_product_groups;
@@ -13,7 +14,7 @@ pub trait CsafTrait {
     /// The associated type representing the type of vulnerabilities in this CSAF structure.
     type VulnerabilityType: VulnerabilityTrait;
 
-    /// The associated type representing the type of product tree in this CSAF structure.
+    /// The associated type representing the type of the product tree in this CSAF structure.
     type ProductTreeType: ProductTreeTrait;
 
     /// The associated type representing the type of document meta in this CSAF structure.
@@ -29,7 +30,7 @@ pub trait CsafTrait {
     fn get_document(&self) -> &Self::DocumentType;
 }
 
-/// Trait representing document meta level information
+/// Trait representing document meta-level information
 pub trait DocumentTrait {
     /// Type representing document tracking information
     type TrackingType: TrackingTrait;
@@ -49,8 +50,14 @@ pub trait DocumentTrait {
     /// Returns the distribution information for this document with CSAF 2.0 semantics
     fn get_distribution_20(&self) -> Option<&Self::DistributionType>;
 
-    /// Returns the notes associtated with this document
+    /// Returns the notes associated with this document
     fn get_notes(&self) -> Option<&Vec<Self::NoteType>>;
+
+    /// Returns the language associated with this document.
+    fn get_lang(&self) -> Option<&String>;
+
+    /// Returns the source language associated with this document.
+    fn get_source_lang(&self) -> Option<&String>;
 }
 
 /// Trait representing distribution information for a document
@@ -76,7 +83,7 @@ pub trait NoteTrait: WithGroupIds {}
 /// Trait representing sharing group information
 pub trait SharingGroupTrait {
     /// Returns the ID of the sharing group
-    fn get_id(&self) -> &String;
+    fn get_id(&self) -> &Uuid;
 
     /// Returns the optional name of the sharing group
     fn get_name(&self) -> Option<&String>;
@@ -95,7 +102,7 @@ pub trait TrackingTrait {
     /// Type representing revision history entries
     type RevisionType: RevisionTrait;
 
-    /// The release date of the latest version of this document
+    /// The release date of this document's latest version
     fn get_current_release_date(&self) -> &String;
 
     /// The initial release date of this document
@@ -161,6 +168,8 @@ pub trait VulnerabilityTrait {
 
     /// The associated type representing vulnerability notes.
     type NoteType: NoteTrait;
+    
+    type FirstKnownExploitationDatesType: FirstKnownExploitationDatesTrait;
 
     /// Retrieves a list of remediations associated with the vulnerability.
     fn get_remediations(&self) -> &Vec<Self::RemediationType>;
@@ -194,6 +203,10 @@ pub trait VulnerabilityTrait {
 
     /// Returns the notes associated with this vulnerability.
     fn get_notes(&self) -> Option<&Vec<Self::NoteType>>;
+    
+    /// Returns the information about the first known exploitation dates of this vulnerability.
+    fn get_first_known_exploitation_dates(&self)
+        -> Option<&Vec<Self::FirstKnownExploitationDatesType>>;
 }
 
 pub trait VulnerabilityIdTrait {
@@ -206,6 +219,13 @@ pub trait VulnerabilityIdTrait {
 pub trait FlagTrait: WithGroupIds {
     /// Returns the date associated with this vulnerability flag
     fn get_date(&self) -> &Option<String>;
+    
+    /// Returns the product IDs associated with this vulnerability flag
+    fn get_product_ids(&self) -> Option<impl Iterator<Item = &String> + '_>;
+}
+
+pub trait FirstKnownExploitationDatesTrait {
+    fn get_date(&self) -> &String;
 }
 
 /// Trait for accessing vulnerability involvement information
@@ -316,7 +336,7 @@ pub trait ProductStatusTrait {
         result
     }
 
-    /// Combines all fixed product IDs into a `HashSet`.
+    /// Combines all fixed product IDs into a `HashSet`.    fn get_product_ids(&self) -> Option<impl Iterator<Item = &String> + '_>;
     ///
     /// This method aggregates product IDs from these lists:
     /// - First fixed product IDs
@@ -345,27 +365,60 @@ pub trait ProductStatusTrait {
 pub trait MetricTrait {
     type ContentType: ContentTrait;
 
-    /// Retrieves a vector of product IDs associated with this metric.
+    /// Retrieves an iterator over product IDs associated with this metric.
     fn get_products(&self) -> impl Iterator<Item = &String> + '_;
 
+    /// Retrieves the "content" (i.e., actual metrics) of this metric.
     fn get_content(&self) -> &Self::ContentType;
-    
+
+    /// Retrieves the "source" (i.e., description of the metrics' origin) of this metric.
     fn get_source(&self) -> &Option<String>;
 }
 
+/// Trait representing a "content holder" for actual metrics inside a "metric" object.
 pub trait ContentTrait {
+    /// Returns whether this content contains a non-empty SSVC metric.
     fn has_ssvc_v1(&self) -> bool;
-    
+
+    /// Returns a parsed instance of the contained SSVC metric, or a `serde_json::Error`,
+    /// encapsulated as a `Result`.
     fn get_ssvc_v1(&self) -> Result<SsvcV1, serde_json::Error>;
 
+    /// Returns a JSON representation of the contained CVSS 2.0 metric, if any.
     fn get_cvss_v2(&self) -> Option<&serde_json::Map<String, serde_json::Value>>;
 
+    /// Returns a JSON representation of the contained CVSS 3.0/3.1 metric, if any.
     fn get_cvss_v3(&self) -> Option<&serde_json::Map<String, serde_json::Value>>;
 
+    /// Returns a JSON representation of the contained CVSS 4.0 metric, if any.
     fn get_cvss_v4(&self) -> Option<&serde_json::Map<String, serde_json::Value>>;
 
+    /// Returns a reference to the contained EPSS metric if it exists.
     fn get_epss(&self) -> &Option<Epss>;
 
+    /// This function constructs a JSON path string that can be used to locate the specific
+    /// content object within a CSAF document's JSON structure. The path format varies between
+    /// CSAF versions due to structural differences in how metrics and content are organized.
+    ///
+    /// # Parameters
+    ///
+    /// * `vulnerability_idx` - The zero-based index of the vulnerability in the document's
+    ///   vulnerability array
+    /// * `metric_idx` - The zero-based index of the metric within the vulnerability's metrics array
+    ///
+    /// # Returns
+    ///
+    /// A `String` containing the JSON path to the content object, formatted according to the
+    /// appropriate CSAF version specification. The path can be used for validation error reporting,
+    /// debugging, or programmatic access to the content location within the document.
+    ///
+    /// # Examples
+    ///
+    /// For CSAF 2.0, the path might look like:
+    /// `/vulnerabilities/0/scores/0`
+    ///
+    /// For CSAF 2.1, the path might look like:
+    /// `/vulnerabilities/0/metrics/0/content`
     fn get_content_json_path(&self, vulnerability_idx: usize, metric_idx: usize) -> String;
 }
 
@@ -392,7 +445,7 @@ pub trait ProductTreeTrait {
     /// The associated type representing the type of relationships in the product tree.
     type RelationshipType: RelationshipTrait<Self::FullProductNameType>;
 
-    /// The associated type representing the type of full product name.
+    /// The associated type representing the type of the full product name.
     type FullProductNameType: ProductTrait;
 
     /// Returns an optional reference to the list of branches in the product tree.
@@ -416,7 +469,7 @@ pub trait ProductTreeTrait {
     /// - Full product names within relationships
     ///
     /// # Parameters
-    /// * `callback` - A mutable function that takes a reference to a product and its path string,
+    /// * `callback` - A mutable function that takes a reference to a product and its path string 
     ///   and returns a `Result<(), ValidationError>`. The path string represents the JSON pointer
     ///   to the product's location in the document.
     ///
@@ -474,7 +527,7 @@ pub trait ProductTreeTrait {
     /// * `Ok(())` if all products were visited successfully
     /// * `Err(ValidationError)` if the callback returned an error for any product
     ///
-    /// # Implementation Note
+    /// # Implementation Notes
     /// Trait implementers should typically implement this by delegating to
     /// `visit_all_products_generic()` with the same callback.
     fn visit_all_products(
@@ -501,7 +554,7 @@ pub trait BranchTrait<FPN: ProductTrait> : Sized {
     /// # Parameters
     /// * `path` - A string representing the current path in the branch hierarchy
     /// * `callback` - A mutable function that takes a reference to Self and the
-    ///                current path string, and returns a Result
+    ///                current path string and returns a Result
     ///
     /// # Returns
     /// * `Ok(())` if the traversal completes successfully
@@ -531,7 +584,7 @@ pub trait BranchTrait<FPN: ProductTrait> : Sized {
     /// * `None` if no branches exceed the allowed depth
     fn find_excessive_branch_depth(&self, remaining_depth: u32) -> Option<String> {
         if let Some(branches) = self.get_branches() {
-            // If we've reached depth limit and there are branches, we've found a violation
+            // If we've reached the depth limit and there are branches, we've found a violation
             if remaining_depth == 1 {
                 return Some("/branches/0".to_string());
             }

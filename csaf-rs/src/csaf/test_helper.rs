@@ -22,6 +22,7 @@ fn run_csaf_tests<CsafType>(
     document_loader: fn(&str) -> std::io::Result<CsafType>,
     test_function: Test<CsafType>,
     expected_errors: &HashMap<&str, &ValidationError>,
+    skipped_tests: &[&str],
 ) {
     use glob::glob;
 
@@ -37,26 +38,38 @@ fn run_csaf_tests<CsafType>(
                 .strip_suffix(".json")
                 .unwrap();
 
+            if skipped_tests.contains(&test_num) {
+                println!("Skipping test {}", test_num);
+                continue;
+            }
+
             // Load the document
             let doc = document_loader(path.to_string_lossy().as_ref()).unwrap();
 
             // Check if this is expected to be a negative or positive test case
-            if test_num.starts_with('0') {
+            if test_num.starts_with('0') || test_num.starts_with('2') {
                 // Negative test case - should fail with a specific error
-                let expected_error = expected_errors.get(test_num).expect(
-                    &format!("Missing expected error definition for negative test case {}", test_num)
-                );
+                let expected_error = expected_errors
+                    .get(test_num)
+                    .expect(
+                        &format!(
+                            "Missing expected error definition for negative test case {}",
+                            test_num
+                        )
+                    );
                 assert_eq!(
                     Err((*expected_error).clone()),
                     test_function(&doc),
-                    "Negative test case {} should have failed with the expected error", test_num
+                    "Negative test case {} should have failed with the expected error",
+                    test_num
                 );
             } else if test_num.starts_with('1') {
                 // Positive test case - should succeed
                 assert_eq!(
                     Ok(()),
                     test_function(&doc),
-                    "Positive test case {} should have succeeded", test_num
+                    "Positive test case {} should have succeeded",
+                    test_num
                 );
             } else {
                 panic!("Unexpected test case number format: {}", test_num);
@@ -65,26 +78,66 @@ fn run_csaf_tests<CsafType>(
     }
 }
 
+pub fn run_csaf20_tests_with_excludes(
+    test_number: &str,
+    test_function: Test<Csaf20>,
+    expected_errors: &HashMap<&str, &ValidationError>,
+    skipped_tests: &[&str],
+) {
+    // Find all test files matching the pattern
+    let file_prefix = &format!("oasis_csaf_tc-csaf_2_0-2021-6-1-{}-", test_number);
+    let pattern = &format!(
+        "assets/csaf/csaf_2.0/test/validator/data/mandatory/{}*.json",
+        file_prefix
+    );
+
+    run_csaf_tests(
+        pattern,
+        file_prefix,
+        load_document_20,
+        test_function,
+        expected_errors,
+        skipped_tests
+    );
+}
+
+pub fn run_csaf21_tests_with_excludes(
+    test_number: &str,
+    test_function: Test<Csaf21>,
+    expected_errors: &HashMap<&str, &ValidationError>,
+    skipped_tests: &[&str],
+) {
+    // Find all test files matching the pattern
+    let file_prefix = &format!("oasis_csaf_tc-csaf_2_1-2024-6-1-{}-", test_number);
+    let pattern = &format!(
+        "assets/csaf/csaf_2.1/test/validator/data/mandatory/{}*.json",
+        file_prefix
+    );
+
+    run_csaf_tests(
+        pattern,
+        file_prefix,
+        load_document_21,
+        test_function,
+        expected_errors,
+        skipped_tests
+    );
+}
+
+/// Overload for run_csaf20_tests without the skipped_tests parameter
 pub fn run_csaf20_tests(
     test_number: &str,
     test_function: Test<Csaf20>,
     expected_errors: &HashMap<&str, &ValidationError>,
 ) {
-    // Find all test files matching the pattern
-    let file_prefix = &format!("oasis_csaf_tc-csaf_2_0-2021-6-1-{}-", test_number);
-    let pattern = &format!("../csaf/csaf_2.0/test/validator/data/mandatory/{}*.json", file_prefix);
-
-    run_csaf_tests(pattern, file_prefix, load_document_20, test_function, expected_errors);
+    run_csaf20_tests_with_excludes(test_number, test_function, expected_errors, &[])
 }
 
+/// Overload for run_csaf21_tests without the skipped_tests parameter
 pub fn run_csaf21_tests(
     test_number: &str,
     test_function: Test<Csaf21>,
     expected_errors: &HashMap<&str, &ValidationError>,
 ) {
-    // Find all test files matching the pattern
-    let file_prefix = &format!("oasis_csaf_tc-csaf_2_1-2024-6-1-{}-", test_number);
-    let pattern = &format!("../csaf/csaf_2.1/test/validator/data/mandatory/{}*.json", file_prefix);
-
-    run_csaf_tests(pattern, file_prefix, load_document_21, test_function, expected_errors);
+    run_csaf21_tests_with_excludes(test_number, test_function, expected_errors, &[])
 }

@@ -1,10 +1,6 @@
 use crate::csaf::getter_traits::{CsafTrait, DistributionTrait, DocumentTrait, SharingGroupTrait};
+use crate::csaf::helpers::{MAX_UUID, NIL_UUID, SG_NAME_PRIVATE, SG_NAME_PUBLIC};
 use crate::csaf::validation::ValidationError;
-
-static NAME_PUBLIC: &str = "Public";
-static NAME_PRIVATE: &str = "No sharing allowed";
-static MAX_UUID: &str = "ffffffff-ffff-ffff-ffff-ffffffffffff";
-static NIL_UUID: &str = "00000000-0000-0000-0000-000000000000";
 
 /// Validates the sharing group name and ID combinations in a CSAF document.
 ///
@@ -32,17 +28,17 @@ pub fn test_6_1_40_invalid_sharing_group_name(
 
     if let Some(sharing_group) = distribution.get_sharing_group() {
         if let Some(sharing_group_name) = sharing_group.get_name() {
-            if sharing_group_name == NAME_PUBLIC {
+            if sharing_group_name == SG_NAME_PUBLIC {
                 if sharing_group.get_id() != MAX_UUID {
                     return Err(ValidationError {
-                        message: format!("Sharing group name \"{}\" is prohibited without max UUID.", NAME_PUBLIC),
+                        message: format!("Sharing group name \"{}\" is prohibited without max UUID.", SG_NAME_PUBLIC),
                         instance_path: "/document/distribution/sharing_group/name".to_string()
                     })
                 }
-            } else if sharing_group_name == NAME_PRIVATE {
+            } else if sharing_group_name == SG_NAME_PRIVATE {
                 if sharing_group.get_id() != NIL_UUID {
                     return Err(ValidationError {
-                        message: format!("Sharing group name \"{}\" is prohibited without nil UUID.", NAME_PRIVATE),
+                        message: format!("Sharing group name \"{}\" is prohibited without nil UUID.", SG_NAME_PRIVATE),
                         instance_path: "/document/distribution/sharing_group/name".to_string()
                     })
                 }
@@ -55,10 +51,10 @@ pub fn test_6_1_40_invalid_sharing_group_name(
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use crate::csaf::test_helper::run_csaf21_tests;
     use crate::csaf::validation::ValidationError;
-    use crate::csaf::validations::test_6_1_40::{test_6_1_40_invalid_sharing_group_name, NAME_PRIVATE, NAME_PUBLIC};
+    use crate::csaf::validations::test_6_1_40::{test_6_1_40_invalid_sharing_group_name, SG_NAME_PRIVATE, SG_NAME_PUBLIC};
+    use std::collections::HashMap;
 
     #[test]
     fn test_test_6_1_40() {
@@ -66,11 +62,11 @@ mod tests {
             "40",
             test_6_1_40_invalid_sharing_group_name, &HashMap::from([
                 ("01", &ValidationError {
-                    message: format!("Sharing group name \"{}\" is prohibited without max UUID.", NAME_PUBLIC),
+                    message: format!("Sharing group name \"{}\" is prohibited without max UUID.", SG_NAME_PUBLIC),
                     instance_path: "/document/distribution/sharing_group/name".to_string()
                 }),
                 ("02", &ValidationError {
-                    message: format!("Sharing group name \"{}\" is prohibited without nil UUID.", NAME_PRIVATE),
+                    message: format!("Sharing group name \"{}\" is prohibited without nil UUID.", SG_NAME_PRIVATE),
                     instance_path: "/document/distribution/sharing_group/name".to_string()
                 }),
             ])

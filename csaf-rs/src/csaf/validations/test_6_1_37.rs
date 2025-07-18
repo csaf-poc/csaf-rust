@@ -1,4 +1,4 @@
-use crate::csaf::getter_traits::{CsafTrait, DocumentTrait, FlagTrait, GeneratorTrait, InvolvementTrait, RemediationTrait, RevisionTrait, ThreatTrait, TrackingTrait, VulnerabilityTrait};
+use crate::csaf::getter_traits::{CsafTrait, DocumentTrait, FirstKnownExploitationDatesTrait, FlagTrait, GeneratorTrait, InvolvementTrait, RemediationTrait, RevisionTrait, ThreatTrait, TrackingTrait, VulnerabilityTrait};
 use crate::csaf::validation::ValidationError;
 use regex::Regex;
 use std::sync::LazyLock;
@@ -84,6 +84,12 @@ pub fn test_6_1_37_date_and_time(
                 check_datetime(date, &format!("/vulnerabilities/{}/threats/{}/date", i_v, i_t))?;
             }
         }
+        
+        if let Some(first_known_exploitation_dates) = vuln.get_first_known_exploitation_dates() {
+            for (i_d, date) in first_known_exploitation_dates.iter().enumerate() {
+                check_datetime(date.get_date(), &format!("/vulnerabilities/{}/first_known_exploitation_dates/{}/date", i_v, i_d))?;
+            }
+        }
     }
 
     Ok(())
@@ -109,9 +115,6 @@ fn check_datetime(date_time: &String, instance_path: &str) -> Result<(), Validat
 
 #[cfg(test)]
 mod tests {
-    /*
-    Ignored because of https://github.com/oasis-tcs/csaf/issues/963
-    
     use crate::csaf::test_helper::run_csaf21_tests;
     use crate::csaf::validation::ValidationError;
     use crate::csaf::validations::test_6_1_37::test_6_1_37_date_and_time;
@@ -146,8 +149,23 @@ mod tests {
                     message: "Invalid date-time string 2016-12-31T00:00:60+23:59, expected RFC3339-compliant format with non-empty timezone and no leap seconds".to_string(),
                     instance_path: "/vulnerabilities/0/disclosure_date".to_string(),
                 }),
+                ("07", &ValidationError {
+                    message: "Invalid date-time string 2015-06-30T10:29:60-13:30, expected RFC3339-compliant format with non-empty timezone and no leap seconds".to_string(),
+                    instance_path: "/vulnerabilities/0/disclosure_date".to_string(),
+                }),
+                ("08", &ValidationError {
+                    message: "Invalid date-time string 2015-06-30T10:29:60-13:30, expected RFC3339-compliant format with non-empty timezone and no leap seconds".to_string(),
+                    instance_path: "/vulnerabilities/0/disclosure_date".to_string(),
+                }),
+                ("09", &ValidationError {
+                    message: "Invalid date-time string 2016-12-31T23:59:60.0123+00:00, expected RFC3339-compliant format with non-empty timezone and no leap seconds".to_string(),
+                    instance_path: "/vulnerabilities/0/disclosure_date".to_string(),
+                }),
+                ("20", &ValidationError {
+                    message: "Invalid date-time string 2024-01-24t10:00:00.000Z, expected RFC3339-compliant format with non-empty timezone and no leap seconds".to_string(),
+                    instance_path: "/vulnerabilities/0/first_known_exploitation_dates/0/date".to_string(),
+                }),
             ])
         );
     }
-    */
 }

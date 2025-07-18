@@ -1,10 +1,8 @@
 use crate::csaf::csaf2_1::schema::DocumentStatus;
-use crate::csaf::getter_traits::{CsafTrait, DistributionTrait, DocumentTrait, SharingGroupTrait, TlpTrait, TrackingTrait};
-use crate::csaf::validation::ValidationError;
 use crate::csaf::csaf2_1::schema::LabelOfTlp::Clear;
-
-static MAX_UUID: &str = "ffffffff-ffff-ffff-ffff-ffffffffffff";
-static NIL_UUID: &str = "00000000-0000-0000-0000-000000000000";
+use crate::csaf::getter_traits::{CsafTrait, DistributionTrait, DocumentTrait, SharingGroupTrait, TlpTrait, TrackingTrait};
+use crate::csaf::helpers::{MAX_UUID, NIL_UUID};
+use crate::csaf::validation::ValidationError;
 
 /// Validates that when a document is marked with TLP CLEAR, any associated sharing group
 /// must either have a `MAX_UUID` as its ID or a `NIL_UUID` accompanied by the document status being "Draft".
@@ -48,10 +46,10 @@ pub fn test_6_1_39_public_sharing_group_with_no_max_uuid(
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use crate::csaf::test_helper::run_csaf21_tests;
     use crate::csaf::validation::ValidationError;
     use crate::csaf::validations::test_6_1_39::test_6_1_39_public_sharing_group_with_no_max_uuid;
+    use std::collections::HashMap;
 
     #[test]
     fn test_test_6_1_39() {

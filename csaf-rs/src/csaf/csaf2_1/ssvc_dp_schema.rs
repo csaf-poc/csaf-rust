@@ -1,6 +1,6 @@
 /// Error types.
 pub mod error {
-    /// Error from a TryFrom or FromStr implementation.
+    /// Error from a `TryFrom` or `FromStr` implementation.
     pub struct ConversionError(::std::borrow::Cow<'static, str>);
     impl ::std::error::Error for ConversionError {}
     impl ::std::fmt::Display for ConversionError {
@@ -30,7 +30,7 @@ pub mod error {
         }
     }
 }
-///DecisionPoint
+///`DecisionPoint`
 ///
 /// <details><summary>JSON schema</summary>
 ///
@@ -171,7 +171,7 @@ impl ::std::str::FromStr for DecisionPointDescription {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -253,7 +253,7 @@ impl ::std::str::FromStr for DecisionPointKey {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -335,7 +335,7 @@ impl ::std::str::FromStr for DecisionPointName {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -419,11 +419,14 @@ impl ::std::str::FromStr for DecisionPointNamespace {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if regress::Regex::new("^(?=.{3,100}$)(x_)?[a-z0-9]{3}([/.-]?[a-z0-9]+){0,97}$")
-            .unwrap()
-            .find(value)
-            .is_none()
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
         {
+            ::regress::Regex::new(
+                    "^(?=.{3,100}$)(x_)?[a-z0-9]{3}([/.-]?[a-z0-9]+){0,97}$",
+                )
+                .unwrap()
+        });
+        if (&*PATTERN).find(value).is_none() {
             return Err(
                 "doesn't match pattern \"^(?=.{3,100}$)(x_)?[a-z0-9]{3}([/.-]?[a-z0-9]+){0,97}$\""
                     .into(),
@@ -506,7 +509,7 @@ impl ::std::convert::From<DecisionPoint> for DecisionPointSchemaDefinition {
         Self(value)
     }
 }
-///DecisionPointValue
+///`DecisionPointValue`
 ///
 /// <details><summary>JSON schema</summary>
 ///
@@ -612,7 +615,7 @@ impl ::std::str::FromStr for DecisionPointValueDescription {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -694,7 +697,7 @@ impl ::std::str::FromStr for DecisionPointValueKey {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -776,7 +779,7 @@ impl ::std::str::FromStr for DecisionPointValueName {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -858,13 +861,14 @@ impl ::std::str::FromStr for DecisionPointVersion {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if regress::Regex::new(
-                "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
-            )
-            .unwrap()
-            .find(value)
-            .is_none()
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
         {
+            ::regress::Regex::new(
+                    "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+                )
+                .unwrap()
+        });
+        if (&*PATTERN).find(value).is_none() {
             return Err(
                 "doesn't match pattern \"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$\""
                     .into(),
@@ -937,7 +941,7 @@ impl<'de> ::serde::Deserialize<'de> for DecisionPointVersion {
 )]
 pub enum SchemaVersion {
     #[serde(rename = "1-0-1")]
-    _101,
+    X101,
 }
 impl ::std::convert::From<&Self> for SchemaVersion {
     fn from(value: &SchemaVersion) -> Self {
@@ -947,7 +951,7 @@ impl ::std::convert::From<&Self> for SchemaVersion {
 impl ::std::fmt::Display for SchemaVersion {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         match *self {
-            Self::_101 => write!(f, "1-0-1"),
+            Self::X101 => write!(f, "1-0-1"),
         }
     }
 }
@@ -957,7 +961,7 @@ impl ::std::str::FromStr for SchemaVersion {
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
         match value {
-            "1-0-1" => Ok(Self::_101),
+            "1-0-1" => Ok(Self::X101),
             _ => Err("invalid value".into()),
         }
     }

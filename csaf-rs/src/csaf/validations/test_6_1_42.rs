@@ -1,6 +1,7 @@
+use std::str::FromStr;
+use packageurl::PackageUrl;
 use crate::csaf::getter_traits::{CsafTrait, ProductIdentificationHelperTrait, ProductTrait, ProductTreeTrait};
 use crate::csaf::validation::ValidationError;
-use purl::GenericPurl;
 
 pub fn test_6_1_42_purl_consistency(
     doc: &impl CsafTrait,
@@ -17,7 +18,7 @@ pub fn test_6_1_42_purl_consistency(
 
                     for (i, purl_str) in purls.iter().enumerate() {
                         // Parse the PURL
-                        let purl = match purl_str.parse::<GenericPurl<String>>() {
+                        let mut purl = match PackageUrl::from_str(purl_str) {
                             Ok(p) => p,
                             Err(_) => {
                                 return Err(ValidationError {
@@ -28,15 +29,7 @@ pub fn test_6_1_42_purl_consistency(
                         };
 
                         // Strip qualifiers
-                        let current_parts = match purl.into_builder().without_qualifiers().build() {
-                            Ok(purl) => purl.to_string(),
-                            Err(_) => {
-                                return Err(ValidationError {
-                                    message: format!("Error whilst stripping qualifiers from PURL: {}", purl_str),
-                                    instance_path: format!("{}/product_identification_helper/purls/{}", path, i),
-                                });
-                            },
-                        };
+                        let current_parts = purl.clear_qualifiers().to_string();
 
                         if let Some(ref base) = base_parts {
                             // Must always match
@@ -47,7 +40,7 @@ pub fn test_6_1_42_purl_consistency(
                                 });
                             }
                         } else {
-                            // First PURL becomes the base for comparison
+                            // The first PURL becomes the base for comparison
                             base_parts = Some(current_parts);
                         }
                     }

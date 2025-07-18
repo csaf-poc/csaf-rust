@@ -6,3 +6,4 @@ pub mod validation;
 pub mod getter_traits;
 pub mod validations;
 pub mod test_helper;
+pub mod generated;

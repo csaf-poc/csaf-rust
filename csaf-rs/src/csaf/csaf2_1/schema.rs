@@ -1,6 +1,6 @@
 /// Error types.
 pub mod error {
-    /// Error from a TryFrom or FromStr implementation.
+    /// Error from a `TryFrom` or `FromStr` implementation.
     pub struct ConversionError(::std::borrow::Cow<'static, str>);
     impl ::std::error::Error for ConversionError {}
     impl ::std::fmt::Display for ConversionError {
@@ -262,7 +262,7 @@ impl ::std::str::FromStr for AdditionalRestartInformation {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -409,7 +409,7 @@ impl ::std::str::FromStr for AlgorithmOfTheCryptographicHash {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -492,7 +492,7 @@ impl ::std::str::FromStr for AlternateName {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -577,7 +577,7 @@ impl ::std::str::FromStr for AudienceOfNote {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -1486,16 +1486,17 @@ impl ::std::str::FromStr for CommonPlatformEnumerationRepresentation {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 5usize {
+        if value.chars().count() < 5usize {
             return Err("shorter than 5 characters".into());
         }
-        if regress::Regex::new(
-                "^((cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#\\$%&'\\(\\)\\+,\\/:;<=>@\\[\\]\\^`\\{\\|\\}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#\\$%&'\\(\\)\\+,\\/:;<=>@\\[\\]\\^`\\{\\|\\}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:\\/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6}))$",
-            )
-            .unwrap()
-            .find(value)
-            .is_none()
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
         {
+            ::regress::Regex::new(
+                    "^((cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#\\$%&'\\(\\)\\+,\\/:;<=>@\\[\\]\\^`\\{\\|\\}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#\\$%&'\\(\\)\\+,\\/:;<=>@\\[\\]\\^`\\{\\|\\}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:\\/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6}))$",
+                )
+                .unwrap()
+        });
+        if (&*PATTERN).find(value).is_none() {
             return Err(
                 "doesn't match pattern \"^((cpe:2\\.3:[aho\\*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#\\$%&'\\(\\)\\+,\\/:;<=>@\\[\\]\\^`\\{\\|\\}~]))+(\\?*|\\*?))|[\\*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[\\*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-\\._]|(\\\\[\\\\\\*\\?!\"#\\$%&'\\(\\)\\+,\\/:;<=>@\\[\\]\\^`\\{\\|\\}~]))+(\\?*|\\*?))|[\\*\\-])){4})|([c][pP][eE]:\\/[AHOaho]?(:[A-Za-z0-9\\._\\-~%]*){0,6}))$\""
                     .into(),
@@ -1653,6 +1654,7 @@ impl<'de> ::serde::Deserialize<'de> for CommonPlatformEnumerationRepresentation 
 ///                  "title": "Sharing Group ID",
 ///                  "description": "Provides the unique ID for the sharing group.",
 ///                  "type": "string",
+///                  "format": "uuid",
 ///                  "pattern": "^(([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12})|([0]{8}-([0]{4}-){3}[0]{12})|([f]{8}-([f]{4}-){3}[f]{12}))$"
 ///                },
 ///                "name": {
@@ -2732,7 +2734,7 @@ impl ::std::str::FromStr for ContactDetails {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -2909,7 +2911,7 @@ impl ::std::str::FromStr for ContributingOrganization {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -3072,7 +3074,7 @@ impl CryptographicHashes {
 )]
 pub enum CsafVersion {
     #[serde(rename = "2.1")]
-    _21,
+    X21,
 }
 impl ::std::convert::From<&Self> for CsafVersion {
     fn from(value: &CsafVersion) -> Self {
@@ -3082,7 +3084,7 @@ impl ::std::convert::From<&Self> for CsafVersion {
 impl ::std::fmt::Display for CsafVersion {
     fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
         match *self {
-            Self::_21 => write!(f, "2.1"),
+            Self::X21 => write!(f, "2.1"),
         }
     }
 }
@@ -3092,7 +3094,7 @@ impl ::std::str::FromStr for CsafVersion {
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
         match value {
-            "2.1" => Ok(Self::_21),
+            "2.1" => Ok(Self::X21),
             _ => Err("invalid value".into()),
         }
     }
@@ -3158,8 +3160,9 @@ impl ::std::str::FromStr for Cve {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if regress::Regex::new("^CVE-[0-9]{4}-[0-9]{4,}$").unwrap().find(value).is_none()
-        {
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
+        { ::regress::Regex::new("^CVE-[0-9]{4}-[0-9]{4,}$").unwrap() });
+        if (&*PATTERN).find(value).is_none() {
             return Err("doesn't match pattern \"^CVE-[0-9]{4}-[0-9]{4,}$\"".into());
         }
         Ok(Self(value.to_string()))
@@ -3321,11 +3324,11 @@ impl ::std::str::FromStr for CweVersion {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if regress::Regex::new("^[1-9]\\d*\\.([0-9]|([1-9]\\d+))(\\.\\d+)?$")
-            .unwrap()
-            .find(value)
-            .is_none()
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
         {
+            ::regress::Regex::new("^[1-9]\\d*\\.([0-9]|([1-9]\\d+))(\\.\\d+)?$").unwrap()
+        });
+        if (&*PATTERN).find(value).is_none() {
             return Err(
                 "doesn't match pattern \"^[1-9]\\d*\\.([0-9]|([1-9]\\d+))(\\.\\d+)?$\""
                     .into(),
@@ -3407,7 +3410,7 @@ impl ::std::str::FromStr for DetailsOfTheRemediation {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -3486,7 +3489,7 @@ impl ::std::str::FromStr for DetailsOfTheThreat {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -3572,14 +3575,12 @@ impl ::std::str::FromStr for DocumentCategory {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
-        if regress::Regex::new("^[^\\s\\-_\\.](.*[^\\s\\-_\\.])?$")
-            .unwrap()
-            .find(value)
-            .is_none()
-        {
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
+        { ::regress::Regex::new("^[^\\s\\-_\\.](.*[^\\s\\-_\\.])?$").unwrap() });
+        if (&*PATTERN).find(value).is_none() {
             return Err(
                 "doesn't match pattern \"^[^\\s\\-_\\.](.*[^\\s\\-_\\.])?$\"".into(),
             );
@@ -3789,6 +3790,7 @@ impl DocumentGenerator {
 ///              "title": "Sharing Group ID",
 ///              "description": "Provides the unique ID for the sharing group.",
 ///              "type": "string",
+///              "format": "uuid",
 ///              "pattern": "^(([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12})|([0]{8}-([0]{4}-){3}[0]{12})|([f]{8}-([f]{4}-){3}[f]{12}))$"
 ///            },
 ///            "name": {
@@ -4298,7 +4300,7 @@ impl ::std::str::FromStr for EngineName {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -4441,7 +4443,7 @@ impl ::std::str::FromStr for EngineVersion {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -4520,7 +4522,7 @@ impl ::std::str::FromStr for EntitlementOfTheRemediation {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -4724,7 +4726,7 @@ impl ::std::str::FromStr for Filename {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -5607,7 +5609,7 @@ impl ::std::str::FromStr for IssuingAuthority {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -5988,13 +5990,14 @@ impl ::std::str::FromStr for LangT {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if regress::Regex::new(
-                "^(([A-Za-z]{2,3}(-[A-Za-z]{3}(-[A-Za-z]{3}){0,2})?|[A-Za-z]{4,8})(-[A-Za-z]{4})?(-([A-Za-z]{2}|[0-9]{3}))?(-([A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3}))*(-[A-WY-Za-wy-z0-9](-[A-Za-z0-9]{2,8})+)*(-[Xx](-[A-Za-z0-9]{1,8})+)?|[Xx](-[A-Za-z0-9]{1,8})+|[Ii]-[Dd][Ee][Ff][Aa][Uu][Ll][Tt]|[Ii]-[Mm][Ii][Nn][Gg][Oo])$",
-            )
-            .unwrap()
-            .find(value)
-            .is_none()
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
         {
+            ::regress::Regex::new(
+                    "^(([A-Za-z]{2,3}(-[A-Za-z]{3}(-[A-Za-z]{3}){0,2})?|[A-Za-z]{4,8})(-[A-Za-z]{4})?(-([A-Za-z]{2}|[0-9]{3}))?(-([A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3}))*(-[A-WY-Za-wy-z0-9](-[A-Za-z0-9]{2,8})+)*(-[Xx](-[A-Za-z0-9]{1,8})+)?|[Xx](-[A-Za-z0-9]{1,8})+|[Ii]-[Dd][Ee][Ff][Aa][Uu][Ll][Tt]|[Ii]-[Mm][Ii][Nn][Gg][Oo])$",
+                )
+                .unwrap()
+        });
+        if (&*PATTERN).find(value).is_none() {
             return Err(
                 "doesn't match pattern \"^(([A-Za-z]{2,3}(-[A-Za-z]{3}(-[A-Za-z]{3}){0,2})?|[A-Za-z]{4,8})(-[A-Za-z]{4})?(-([A-Za-z]{2}|[0-9]{3}))?(-([A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3}))*(-[A-WY-Za-wy-z0-9](-[A-Za-z0-9]{2,8})+)*(-[Xx](-[A-Za-z0-9]{1,8})+)?|[Xx](-[A-Za-z0-9]{1,8})+|[Ii]-[Dd][Ee][Ff][Aa][Uu][Ll][Tt]|[Ii]-[Mm][Ii][Nn][Gg][Oo])$\""
                     .into(),
@@ -6076,7 +6079,7 @@ impl ::std::str::FromStr for LegacyVersionOfTheRevision {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -6161,7 +6164,7 @@ impl ::std::str::FromStr for LicenseExpression {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -6338,7 +6341,7 @@ impl ::std::str::FromStr for ModelNumber {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -6422,7 +6425,7 @@ impl ::std::str::FromStr for NameOfPublisher {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -6511,7 +6514,7 @@ impl ::std::str::FromStr for NameOfTheBranch {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -6594,7 +6597,7 @@ impl ::std::str::FromStr for NameOfTheContributor {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -6878,7 +6881,7 @@ impl ::std::str::FromStr for NoteContent {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -7154,7 +7157,7 @@ impl ::std::str::FromStr for PartyContactInformation {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -7336,11 +7339,9 @@ impl ::std::str::FromStr for Percentile {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if regress::Regex::new("^(([0]\\.([0-9])+)|([1]\\.[0]+))$")
-            .unwrap()
-            .find(value)
-            .is_none()
-        {
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
+        { ::regress::Regex::new("^(([0]\\.([0-9])+)|([1]\\.[0]+))$").unwrap() });
+        if (&*PATTERN).find(value).is_none() {
             return Err(
                 "doesn't match pattern \"^(([0]\\.([0-9])+)|([1]\\.[0]+))$\"".into(),
             );
@@ -7421,11 +7422,9 @@ impl ::std::str::FromStr for Probability {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if regress::Regex::new("^(([0]\\.([0-9])+)|([1]\\.[0]+))$")
-            .unwrap()
-            .find(value)
-            .is_none()
-        {
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
+        { ::regress::Regex::new("^(([0]\\.([0-9])+)|([1]\\.[0]+))$").unwrap() });
+        if (&*PATTERN).find(value).is_none() {
             return Err(
                 "doesn't match pattern \"^(([0]\\.([0-9])+)|([1]\\.[0]+))$\"".into(),
             );
@@ -7573,7 +7572,7 @@ impl ::std::str::FromStr for ProductGroupIdT {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -7697,7 +7696,7 @@ impl ::std::str::FromStr for ProductIdT {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -8724,6 +8723,7 @@ impl Revision {
 ///          "title": "Sharing Group ID",
 ///          "description": "Provides the unique ID for the sharing group.",
 ///          "type": "string",
+///          "format": "uuid",
 ///          "pattern": "^(([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12})|([0]{8}-([0]{4}-){3}[0]{12})|([f]{8}-([f]{4}-){3}[f]{12}))$"
 ///        },
 ///        "name": {
@@ -8851,7 +8851,7 @@ impl ::std::str::FromStr for SerialNumber {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -8910,6 +8910,7 @@ impl<'de> ::serde::Deserialize<'de> for SerialNumber {
 ///      "title": "Sharing Group ID",
 ///      "description": "Provides the unique ID for the sharing group.",
 ///      "type": "string",
+///      "format": "uuid",
 ///      "pattern": "^(([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12})|([0]{8}-([0]{4}-){3}[0]{12})|([f]{8}-([f]{4}-){3}[f]{12}))$"
 ///    },
 ///    "name": {
@@ -8935,7 +8936,7 @@ impl<'de> ::serde::Deserialize<'de> for SerialNumber {
 #[serde(deny_unknown_fields)]
 pub struct SharingGroup {
     ///Provides the unique ID for the sharing group.
-    pub id: SharingGroupId,
+    pub id: ::uuid::Uuid,
     ///Contains a human-readable name for the sharing group.
     #[serde(default, skip_serializing_if = "::std::option::Option::is_none")]
     pub name: ::std::option::Option<SharingGroupName>,
@@ -8948,94 +8949,6 @@ impl ::std::convert::From<&SharingGroup> for SharingGroup {
 impl SharingGroup {
     pub fn builder() -> builder::SharingGroup {
         Default::default()
-    }
-}
-///Provides the unique ID for the sharing group.
-///
-/// <details><summary>JSON schema</summary>
-///
-/// ```json
-///{
-///  "title": "Sharing Group ID",
-///  "description": "Provides the unique ID for the sharing group.",
-///  "type": "string",
-///  "pattern": "^(([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12})|([0]{8}-([0]{4}-){3}[0]{12})|([f]{8}-([f]{4}-){3}[f]{12}))$"
-///}
-/// ```
-/// </details>
-#[derive(::serde::Serialize, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[serde(transparent)]
-pub struct SharingGroupId(::std::string::String);
-impl ::std::ops::Deref for SharingGroupId {
-    type Target = ::std::string::String;
-    fn deref(&self) -> &::std::string::String {
-        &self.0
-    }
-}
-impl ::std::convert::From<SharingGroupId> for ::std::string::String {
-    fn from(value: SharingGroupId) -> Self {
-        value.0
-    }
-}
-impl ::std::convert::From<&SharingGroupId> for SharingGroupId {
-    fn from(value: &SharingGroupId) -> Self {
-        value.clone()
-    }
-}
-impl ::std::str::FromStr for SharingGroupId {
-    type Err = self::error::ConversionError;
-    fn from_str(
-        value: &str,
-    ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if regress::Regex::new(
-                "^(([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12})|([0]{8}-([0]{4}-){3}[0]{12})|([f]{8}-([f]{4}-){3}[f]{12}))$",
-            )
-            .unwrap()
-            .find(value)
-            .is_none()
-        {
-            return Err(
-                "doesn't match pattern \"^(([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12})|([0]{8}-([0]{4}-){3}[0]{12})|([f]{8}-([f]{4}-){3}[f]{12}))$\""
-                    .into(),
-            );
-        }
-        Ok(Self(value.to_string()))
-    }
-}
-impl ::std::convert::TryFrom<&str> for SharingGroupId {
-    type Error = self::error::ConversionError;
-    fn try_from(
-        value: &str,
-    ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        value.parse()
-    }
-}
-impl ::std::convert::TryFrom<&::std::string::String> for SharingGroupId {
-    type Error = self::error::ConversionError;
-    fn try_from(
-        value: &::std::string::String,
-    ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        value.parse()
-    }
-}
-impl ::std::convert::TryFrom<::std::string::String> for SharingGroupId {
-    type Error = self::error::ConversionError;
-    fn try_from(
-        value: ::std::string::String,
-    ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        value.parse()
-    }
-}
-impl<'de> ::serde::Deserialize<'de> for SharingGroupId {
-    fn deserialize<D>(deserializer: D) -> ::std::result::Result<Self, D::Error>
-    where
-        D: ::serde::Deserializer<'de>,
-    {
-        ::std::string::String::deserialize(deserializer)?
-            .parse()
-            .map_err(|e: self::error::ConversionError| {
-                <D::Error as ::serde::de::Error>::custom(e.to_string())
-            })
     }
 }
 ///Contains a human-readable name for the sharing group.
@@ -9083,7 +8996,7 @@ impl ::std::str::FromStr for SharingGroupName {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -9162,7 +9075,7 @@ impl ::std::str::FromStr for StockKeepingUnit {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -9244,7 +9157,7 @@ impl ::std::str::FromStr for SummaryOfTheAcknowledgment {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -9323,7 +9236,7 @@ impl ::std::str::FromStr for SummaryOfTheInvolvement {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -9406,7 +9319,7 @@ impl ::std::str::FromStr for SummaryOfTheProductGroup {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -9485,7 +9398,7 @@ impl ::std::str::FromStr for SummaryOfTheReference {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -9567,7 +9480,7 @@ impl ::std::str::FromStr for SummaryOfTheRevision {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -9650,7 +9563,7 @@ impl ::std::str::FromStr for SystemName {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -9733,7 +9646,7 @@ impl ::std::str::FromStr for Text {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -9817,7 +9730,7 @@ impl ::std::str::FromStr for TextOfAggregateSeverity {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -9901,7 +9814,7 @@ impl ::std::str::FromStr for TextualDescription {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -9985,7 +9898,7 @@ impl ::std::str::FromStr for TextualDescriptionOfTheProduct {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -10135,7 +10048,7 @@ impl ::std::str::FromStr for Title {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -10220,7 +10133,7 @@ impl ::std::str::FromStr for TitleOfNote {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -10303,7 +10216,7 @@ impl ::std::str::FromStr for TitleOfThisDocument {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
         Ok(Self(value.to_string()))
@@ -10645,10 +10558,12 @@ impl ::std::str::FromStr for UniqueIdentifierForTheDocument {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
-        if regress::Regex::new("^[\\S](.*[\\S])?$").unwrap().find(value).is_none() {
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
+        { ::regress::Regex::new("^[\\S](.*[\\S])?$").unwrap() });
+        if (&*PATTERN).find(value).is_none() {
             return Err("doesn't match pattern \"^[\\S](.*[\\S])?$\"".into());
         }
         Ok(Self(value.to_string()))
@@ -10733,10 +10648,12 @@ impl ::std::str::FromStr for ValueOfTheCryptographicHash {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 32usize {
+        if value.chars().count() < 32usize {
             return Err("shorter than 32 characters".into());
         }
-        if regress::Regex::new("^[0-9a-fA-F]{32,}$").unwrap().find(value).is_none() {
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
+        { ::regress::Regex::new("^[0-9a-fA-F]{32,}$").unwrap() });
+        if (&*PATTERN).find(value).is_none() {
             return Err("doesn't match pattern \"^[0-9a-fA-F]{32,}$\"".into());
         }
         Ok(Self(value.to_string()))
@@ -10822,13 +10739,14 @@ impl ::std::str::FromStr for VersionT {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if regress::Regex::new(
-                "^(0|[1-9][0-9]*)$|^((0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?)$",
-            )
-            .unwrap()
-            .find(value)
-            .is_none()
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
         {
+            ::regress::Regex::new(
+                    "^(0|[1-9][0-9]*)$|^((0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?)$",
+                )
+                .unwrap()
+        });
+        if (&*PATTERN).find(value).is_none() {
             return Err(
                 "doesn't match pattern \"^(0|[1-9][0-9]*)$|^((0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?)$\""
                     .into(),
@@ -11570,7 +11488,9 @@ impl ::std::str::FromStr for WeaknessId {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if regress::Regex::new("^CWE-[1-9]\\d{0,5}$").unwrap().find(value).is_none() {
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
+        { ::regress::Regex::new("^CWE-[1-9]\\d{0,5}$").unwrap() });
+        if (&*PATTERN).find(value).is_none() {
             return Err("doesn't match pattern \"^CWE-[1-9]\\d{0,5}$\"".into());
         }
         Ok(Self(value.to_string()))
@@ -11655,14 +11575,12 @@ impl ::std::str::FromStr for WeaknessName {
     fn from_str(
         value: &str,
     ) -> ::std::result::Result<Self, self::error::ConversionError> {
-        if value.len() < 1usize {
+        if value.chars().count() < 1usize {
             return Err("shorter than 1 characters".into());
         }
-        if regress::Regex::new("^[^\\s\\-_\\.](.*[^\\s\\-_\\.])?$")
-            .unwrap()
-            .find(value)
-            .is_none()
-        {
+        static PATTERN: ::std::sync::LazyLock<::regress::Regex> = ::std::sync::LazyLock::new(||
+        { ::regress::Regex::new("^[^\\s\\-_\\.](.*[^\\s\\-_\\.])?$").unwrap() });
+        if (&*PATTERN).find(value).is_none() {
             return Err(
                 "doesn't match pattern \"^[^\\s\\-_\\.](.*[^\\s\\-_\\.])?$\"".into(),
             );
@@ -14910,7 +14828,7 @@ pub mod builder {
     }
     #[derive(Clone, Debug)]
     pub struct SharingGroup {
-        id: ::std::result::Result<super::SharingGroupId, ::std::string::String>,
+        id: ::std::result::Result<::uuid::Uuid, ::std::string::String>,
         name: ::std::result::Result<
             ::std::option::Option<super::SharingGroupName>,
             ::std::string::String,
@@ -14927,7 +14845,7 @@ pub mod builder {
     impl SharingGroup {
         pub fn id<T>(mut self, value: T) -> Self
         where
-            T: ::std::convert::TryInto<super::SharingGroupId>,
+            T: ::std::convert::TryInto<::uuid::Uuid>,
             T::Error: ::std::fmt::Display,
         {
             self.id = value
